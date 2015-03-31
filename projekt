@@ -1,0 +1,29 @@
+Projekt yolo-avenger: Napisac w qt program do napierdalania marathonow.
+	- osobne komponenty
+
+Co warto mieć:
+	0. Ogólnie:
+		- rysowanie/tworzenie obiektow kwadrat, kolo, trojkaty, proste, punkty i takie tam
+		- latwe tworzenie guzikow, i skrotow klawiszowych, latwy wybor kolorow
+		- przyblizanie, oddalanie
+		- podswietlanie
+		- komunikacja z programem, serwerem i wszystkim
+	
+	1. Plansza
+		- hexy, kwadraty, trojkaty prostokatne/rownoboczne
+	
+	2. Grafy
+		- rysowanie grafow na plaszczyznie, ladne rozmieszczanie, przesuwanie wierzcholkow, dodawanie wierzcholkow krawedzi
+		- zapis, odczyt
+	
+	3. Dzwieki
+		- rysowanie dzwieku, wycinanie fragmentu, odwracanie, przyspieszanie, spowalnianie, odtwarzanie, zapis, odczyt, formaty itp
+	
+	4. Obrazy
+		- odczyt, zapis, malowanie
+
+	5. Geometria
+		- coś na zasadzie geogebry, podstawowe konstrukcje geometryczne
+		
+	6. Sieci neuronowe
+		- i w ogole pleple sieci neuronwe, fm, gradienty i takie tam
