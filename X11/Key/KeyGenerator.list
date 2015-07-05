@@ -1,0 +1,186 @@
+# Func
+Key  Backspace   BackSpace
+Key  Tab         Tab
+Key  Return      Return
+Key  Escape      Escape
+Key  Delete      Delete
+
+# Movement
+Key  Home        Home
+Key  Left        Left
+Key  Right       Right
+Key  Up          Up
+Key  Down        Down
+Key  PageDown    Page_Down
+Key  PageUp      Page_Up
+Key  Begin       Begin
+
+# Locks
+Key  NumLock     Num_Lock
+Key  CapsLock    Caps_Lock
+
+# Fs
+Key F1  F1
+Key F2  F2
+Key F3  F3
+Key F4  F4
+Key F5  F5
+Key F6  F6
+Key F7  F7
+Key F8  F8
+Key F9  F9
+Key F10 F10
+Key F11 F11
+Key F12 F12
+
+# Modifiers
+Key     ShiftL    Shift_L
+Key     ShiftR    Shift_R
+Group   Shift     ShiftL ShiftR
+Key     CtrlL     Control_L
+Key     CtrlR     Control_R
+Group   Ctrl      CtrlL CtrlR
+Key     AltL      Alt_L
+Key     AltR      Alt_R
+Group   Alt       AltL AltR
+
+# Symbols
+Key  Space            space
+Key  Exclamation      exclam
+Key  Quote            quotedbl
+Key  Hash             numbersign
+Key  Dollar           dollar
+Key  Percent          percent
+Key  Ampersand        ampersand
+Key  Apostrophe       apostrophe
+Key  LeftParenthesis  parenleft
+Key  RightParenthesis parenright
+Key  Asterisk         asterisk
+Key  Plus             plus
+Key  Minus            minus
+Key  Comma            comma
+Key  Period           period
+Key  Slash            slash
+
+Key  Colon            colon
+Key  Semicolon        semicolon
+Key  Less             less
+Key  Greater          greater
+Key  Equal            equal
+Key  Question         question
+Key  At               at
+
+Key  LeftBracket      bracketleft
+Key  RightBracket     bracketright
+Key  Backslash        backslash
+Key  Underscore       underscore
+Key  Grave            grave
+
+Key  LeftBrace        braceleft
+Key  RightBrace       braceright
+Key  Pipe             bar
+Key  Tilde            asciitilde
+
+# Digits
+Key  Zero    0
+Key  One     1
+Key  Two     2
+Key  Three   3
+Key  Four    4
+Key  Five    5
+Key  Six     6
+Key  Seven   7
+Key  Eight   8
+Key  Nine    9
+Group    isDigit   Zero One Two Three Four Five Six Seven Eight Nine
+Sequence   Digit 0 Zero One Two Three Four Five Six Seven Eight Nine
+
+# Capital Letters
+Key  cA  A
+Key  cB  B
+Key  cC  C
+Key  cD  D
+Key  cE  E
+Key  cF  F
+Key  cG  G
+Key  cH  H
+Key  cI  I
+Key  cJ  J
+Key  cK  K
+Key  cL  L
+Key  cM  M
+Key  cN  N
+Key  cO  O
+Key  cP  P
+Key  cQ  Q
+Key  cR  R
+Key  cS  S
+Key  cT  T
+Key  cU  U
+Key  cV  V
+Key  cW  W
+Key  cX  X
+Key  cY  Y
+Key  cZ  Z
+Group   isCLetter   cA cB cC cD cE cF cG cH cI cJ cK cL cM cN cO cP cQ cR cS cT cU cV cW cX cY cZ
+Sequence  CLetter 0 cA cB cC cD cE cF cG cH cI cJ cK cL cM cN cO cP cQ cR cS cT cU cV cW cX cY cZ
+
+# Small Letters
+Key  sA  a
+Key  sB  b
+Key  sC  c
+Key  sD  d
+Key  sE  e
+Key  sF  f
+Key  sG  g
+Key  sH  h
+Key  sI  i
+Key  sJ  j
+Key  sK  k
+Key  sL  l
+Key  sM  m
+Key  sN  n
+Key  sO  o
+Key  sP  p
+Key  sQ  q
+Key  sR  r
+Key  sS  s
+Key  sT  t
+Key  sU  u
+Key  sV  v
+Key  sW  w
+Key  sX  x
+Key  sY  y
+Key  sZ  z
+Group   isSLetter   sA sB sC sD sE sF sG sH sI sJ sK sL sM sN sO sP sQ sR sS sT sU sV sW sX sY sZ
+Sequence  SLetter 0 sA sB sC sD sE sF sG sH sI sJ sK sL sM sN sO sP sQ sR sS sT sU sV sW sX sY sZ
+
+# Any Letters
+Group  A  sA cA
+Group  B  sB cB
+Group  C  sC cC
+Group  D  sD cD
+Group  E  sE cE
+Group  F  sF cF
+Group  G  sG cG
+Group  H  sH cH
+Group  I  sI cI
+Group  J  sJ cJ
+Group  K  sK cK
+Group  L  sL cL
+Group  M  sM cM
+Group  N  sN cN
+Group  O  sO cO
+Group  P  sP cP
+Group  Q  sQ cQ
+Group  R  sR cR
+Group  S  sS cS
+Group  T  sT cT
+Group  U  sU cU
+Group  V  sV cV
+Group  W  sW cW
+Group  X  sX cX
+Group  Y  sY cY
+Group  Z  sZ cZ
+Group   isLetter   A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
+Sequence  Letter 0 A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
