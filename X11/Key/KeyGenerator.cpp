@@ -135,6 +135,11 @@ void printHeader(const string & path)
 	out << "\n";
 	out << "\tunsigned long value() const;\n";
 	out << "\n";
+	out << "\tchar getChar() const;\n";
+	out << "\n";
+	out << "\tbool modCtrl() const;\n";
+	out << "\tbool modShift() const;\n";
+	out << "\n";
 	for(auto & b : bindings)
 		out << "\tbool " << b.first << "() const;\n";
 	out << "\n";
@@ -148,6 +153,8 @@ void printHeader(const string & path)
 	out << "\n";
 	out << "private:\n";
 	out << "\tunsigned long key;\n";
+	out << "\tunsigned long mask;\n";
+	out << "\tchar character;\n";
 	out << "};\n";
 }
 
@@ -161,11 +168,19 @@ void printSource(const string & path)
 	out << "\n";
 	out << "Key::Key(void * eventPtr)\n";
 	out << "{\n";
-	out << "\tchar buffer[2];\n";
-	out << "\tXLookupString((XKeyEvent*) eventPtr, buffer, 2, &key, nullptr);\n";
+	//out << "\tchar buffer[2];\n";
+	out << "\tXKeyEvent * event = (XKeyEvent*) eventPtr;\n";
+	out << "\tif(XLookupString(event, &character, 1, &key, nullptr) != 1)\n";
+	out << "\t\tcharacter = 0;\n";
+	out << "\tmask = event->state;\n";
 	out << "}\n";
 	out << "\n";
 	out << "unsigned long Key::value() const { return key; }\n";
+	out << "\n";
+	out << "char Key::getChar() const { return character; }\n";
+	out << "\n";
+	out << "bool Key::modCtrl() const { return mask & ControlMask; }\n";
+	out << "bool Key::modShift() const { return mask & ShiftMask; }\n";
 	out << "\n";
 	for(auto & b : bindings)
 		out << "bool Key::" << b.first << "() const { return key == XK_" << b.second << "; }\n";
@@ -205,18 +220,34 @@ void printSource(const string & path)
 	out << "std::ostream & operator << (std::ostream & stream, const Key & key)\n";
 	out << "{\n";
 	out << "\tstream << \"Key(\";\n";
+
 	out << "\tbool first = true;\n";
-	for(auto & t : boolTokens)
-	{
-		out << "\tif(key." << t << "())\n";
+
+	out << "\tif(key.getChar())\n";
+	out << "\t{\n";
+	out << "\t\tstream << \"'\" << key.getChar() << \"'\";\n";
+	out << "\t\tfirst = false;\n";
+	out << "\t}\n";
+
+	auto make_booltoken_function = [&out] (const string & s) {
+		out << "\tif(key." << s << "())\n";
 		out << "\t{\n";
 		out << "\t\tif(!first)\n";
 		out << "\t\t\tstream << \", \";\n";
 		out << "\t\telse\n";
 		out << "\t\t\tfirst = false;\n";
-		out << "\t\tstream << \"" << t << "\";\n";
+		out << "\t\tstream << \"" << s << "\";\n";
 		out << "\t}\n";
-	}
+	};
+
+	for(auto & t : boolTokens)
+		make_booltoken_function(t);
+
+	out << "\n";
+
+	make_booltoken_function("modCtrl");
+	make_booltoken_function("modShift");
+
 	out << "\tstream << \")\";\n";
 	out << "\treturn stream;\n";
 	out << "}\n";
