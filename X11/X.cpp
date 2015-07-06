@@ -128,30 +128,55 @@ void Painter::fillRectangle(int x, int y, unsigned width, unsigned height)
 	XFillRectangle(display, window, context, x, y, width, height);
 }
 
-void Painter::drawArc(int x, int y, unsigned width, unsigned height, int angle1, int angle2)
+void Painter::drawArc(int x, int y, unsigned width, unsigned height, double angle1, double angle2)
 {
-	XDrawArc(display, window, context, x, y, width, height, angle1, angle2);
+	XDrawArc(display, window, context, x, y, width, height, (int) (angle1 * 64), (int) (angle2 * 64));
 }
 
-void Painter::drawString(int x, int y, const std::string & str)
+void Painter::fillArc(int x, int y, unsigned width, unsigned height, double angle1, double angle2)
 {
-	XDrawString(display, window, context, x, y, str.c_str(), (int) str.length());
-	/*
-	char **missing_charset_list_return;
-	int missing_charset_count_return;
-	char *def_string_return;
-	XFontSet fontSet = XCreateFontSet(display,
-		//"-misc-*-medium-r-normal--14-*-*-*-*-*-*",
-		//"-*-*-*-*-*--*-*-*-*-*-iso10646-*",
-		//"-*-*-bold-*-*-*-*-*-*-*-*-*-iso10646-*",
-		"-Misc-Fixed-Medium-R-Normal--7-70-75-75-C-50-ISO10646-1",
-		&missing_charset_list_return,
-		&missing_charset_count_return,
-		&def_string_return
+	XFillArc(display, window, context, x, y, width, height, (int) (angle1 * 64), (int) (angle2 * 64));
+}
+
+void Painter::drawEllipse(int x, int y, unsigned width, unsigned height)
+{
+	XDrawArc(display, window, context, x, y, width, height, 0, 360 * 64);
+}
+
+void Painter::fillEllipse(int x, int y, unsigned width, unsigned height)
+{
+	XFillArc(display, window, context, x, y, width, height, 0, 360 * 64);
+}
+
+void Painter::drawCircle(int x, int y, int r)
+{
+	drawEllipse(x - r, y - r, 2 * r, 2 * r);
+}
+
+void Painter::fillCircle(int x, int y, int r)
+{
+	fillEllipse(x - r, y - r, 2 * r, 2 * r);
+}
+
+void Painter::drawString(int x, int y, int width, int height, const std::string & str)
+{
+	int direction_return;
+	int font_ascent_return;
+	int font_descent_return;
+	XCharStruct dim;
+	XQueryTextExtents(
+		display,
+		XGContextFromGC(context),
+		str.c_str(), (int) str.length(), 
+		&direction_return,
+		&font_ascent_return, &font_descent_return,
+		&dim
 	);
-	Xutf8DrawString(display, window, fontSet, context, x, y, str.c_str(), (int) str.length());
-	XFreeFontSet(display, fontSet);
-	*/
+	const int W = dim.width;
+	const int H = dim.ascent + dim.descent;
+	const int xp = x + (width - W) / 2;
+	const int yp = y + (height - H) / 2 + dim.ascent;
+	XDrawString(display, window, context, xp, yp, str.c_str(), (int) str.length());
 }
 
 void XSetRedrawHandler(XRedrawHandlerType f)

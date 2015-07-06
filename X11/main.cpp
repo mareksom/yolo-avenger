@@ -1,23 +1,13 @@
 #include "X.h"
 
-#include <iostream>
+#include <bits/stdc++.h>
 
 using namespace std;
 
 void redraw(Painter & painter)
 {
-	painter.setColor(painter.BlueViolet);
-	painter.drawArc(0, 0, 100, 100, 0 * 64, 360 * 64);
-	painter.drawLine(0, 0, 50, 60);
-	painter.setColor(painter.green);
-	painter.drawPoint(55, 65);
-	painter.setColor(painter.yellow);
-	painter.fillRectangle(10, 10, 20, 30);
-	painter.setColor(painter.brown);
-	painter.drawString(10, 10, "napisdfjadsiofjas dojf");
-	painter.setColor(painter.green);
-	painter.drawRectangle(10, 10, 100, 100);
-
+	for(int i = 0; i < 10; i++)
+		painter.drawCircle(100 + i * 10, 100, 50);
 	cout << "redraw\n";
 }
 
@@ -72,6 +62,6 @@ int main()
 	XSetMouseEnterHandler(mouseEnter);
 	XSetMouseLeaveHandler(mouseLeave);
 	XSetFocusHandler(focusChange);
-	XInit(200, 100);
+	XInit(500, 500);
 	return 0;
 }
