@@ -11,7 +11,6 @@ namespace {
 Display * display;
 int black, white;
 
-bool windowCreated;
 Window window;
 GC context;
 Painter * painter;
@@ -21,7 +20,9 @@ int eventMask;
 std::function<void(XEvent &)> eventHandlers[LASTEvent];
 void emptyHandler(XEvent &) { }
 
-void XInit(bool createWindow, unsigned width, unsigned height)
+} // namespace
+
+void XInit(unsigned width, unsigned height)
 {
 	display = XOpenDisplay(nullptr);
 	if(display == nullptr)
@@ -35,34 +36,28 @@ void XInit(bool createWindow, unsigned width, unsigned height)
 
 	painter = new Painter((void*) display);
 
-	windowCreated = createWindow;
+	window = XCreateSimpleWindow(display, DefaultRootWindow(display), 0, 0, width, height, 0, black, black);
 
-	if(windowCreated)
+	XSelectInput(display, window, StructureNotifyMask);
+
+	XMapWindow(display, window);
+
+	context = XCreateGC(display, window, 0, nullptr);
+
+	XSetForeground(display, context, white);
+
+	while(true)
 	{
-		window = XCreateSimpleWindow(display, DefaultRootWindow(display), 0, 0, width, height, 0, black, black);
-
-		XSelectInput(display, window, StructureNotifyMask);
-
-		XMapWindow(display, window);
-
-		context = XCreateGC(display, window, 0, nullptr);
-
-		XSetForeground(display, context, white);
-
-		while(true)
-		{
-			XEvent event;
-			XNextEvent(display, &event);
-			if(event.type == MapNotify)
-				break;
-		}
+		XEvent event;
+		XNextEvent(display, &event);
+		if(event.type == MapNotify)
+			break;
 	}
 
 	XSelectInput(display, window, eventMask);
 
 	/* Draw for the first time */
-	if(windowCreated)
-		XClearArea(display, window, 0, 0, 0, 0, true);
+	XClearArea(display, window, 0, 0, 0, 0, true);
 
 	while(true)
 	{
@@ -82,19 +77,8 @@ void XInit(bool createWindow, unsigned width, unsigned height)
 
 	XFreeGC(display, context);
 	XDestroyWindow(display, window);
+
 	XCloseDisplay(display);
-}
-
-} // namespace
-
-void XInit()
-{
-	XInit(false, 0, 0);
-}
-
-void XInit(unsigned width, unsigned height)
-{
-	XInit(true, width, height);
 }
 
 /* ---===[ Redrawing ]===--- */

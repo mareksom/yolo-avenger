@@ -3,12 +3,8 @@
 #include <functional>
 #include <string>
 
-/* Initializing the X client
- * These functions never return, so you should register all the handlers earlier.
- */
-/* Initialize without creating any window */
-void XInit();
-/* Initialize and create a window with given width and height */
+/* Initializing the X client and a window with given width and height
+ * This function never returns, so you should register all the handlers earlier. */
 void XInit(unsigned width, unsigned height);
 
 
