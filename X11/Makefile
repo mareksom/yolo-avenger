@@ -12,16 +12,7 @@ HEADERS = X.h Key.h PainterColors.h Mouse.h
 
 LIBRARY_FILE_NAME = lib$(LIBRARY_NAME).a
 
-all: pack
-
-.PHONY: pack
-pack: $(PACKAGE_NAME)
-
-.PHONY: lib
-lib: $(BUILD)/$(LIBRARY_FILE_NAME)
-
-.PHONY: bin
-bin: $(BUILD)/$(BINARY_NAME) 
+all: $(PACKAGE_NAME) $(BUILD)/$(LIBRARY_FILE_NAME) $(BUILD)/$(BINARY_NAME)
 
 $(PACKAGE_NAME): $(BUILD)/$(LIBRARY_FILE_NAME) $(HEADERS)
 	rm $(PACKAGE_NAME) -rf
