@@ -4,7 +4,9 @@
 
 #include <bits/stdc++.h>
 
-class HexField : public Field
+namespace Hex {
+
+class HexField : public Board::Field
 {
 public:
 	HexField(int x, int y) : Field(), mx(x), my(y)
@@ -34,17 +36,17 @@ private:
 	int mx, my;
 };
 
-template<int Width>
-class HexBoard
+template<typename FieldT, int Width>
+class HexBoard : public Board::Board<FieldT>
 {
 public:
-	typedef HexField FieldType;
+	typedef typename Board::Board<FieldT>::FieldType FieldType;
 
-	HexBoard()
+	HexBoard() : lastHovered(nullptr)
 	{
 		for(int i = 0; i < 20; i++)
 			for(int j = 0; j < 20; j++)
-				fields.emplace(std::make_pair(i, j), HexField(i, j));
+				fields.emplace(std::make_pair(i, j), FieldType(i, j));
 	}
 
 	void draw(Cairo::RefPtr<Cairo::Context> context,
@@ -52,6 +54,8 @@ public:
 	{
 		for(auto & field : fields)
 			drawField(field.second, context);
+		if(lastHovered)
+			drawField(*lastHovered, context);
 	}
 
 	class OutOfBoundsException : public std::exception
@@ -63,7 +67,7 @@ public:
 		}
 	};
 
-	HexField & operator () (int x, int y)
+	FieldType & operator () (int x, int y)
 	{
 		auto it = fields.find(std::make_pair(x, y));
 		if(it == fields.end())
@@ -71,7 +75,7 @@ public:
 		return it->second;
 	}
 
-	const HexField & operator () (int x, int y) const
+	const FieldType & operator () (int x, int y) const
 	{
 		auto it = fields.find(std::make_pair(x, y));
 		if(it == fields.end())
@@ -79,20 +83,47 @@ public:
 		return it->second;
 	}
 
-	HexField & getAt(double x, double y)
+	FieldType & getAt(double x, double y)
 	{
 		auto coordinates = toCoords(x, y);
 		return (*this)(coordinates.first, coordinates.second);
 	}
 
-	const HexField & getAt(double x, double y) const
+	const FieldType & getAt(double x, double y) const
 	{
 		auto coordinates = toCoords(x, y);
 		return (*this)(coordinates.first, coordinates.second);
+	}
+
+	void addFieldAction(const std::string & name, std::function<void(int, int)> f)
+	{
+		Board::Board<FieldType>::addFieldAction(name, [f, this] () {
+			if(this->lastHovered)
+				f(this->lastHovered->x(), this->lastHovered->y());
+		});
+	}
+
+	Gtk::Menu & getGtkPopupFieldMenu()
+	{
+		if(lastHovered == nullptr)
+			throw OutOfBoundsException();
+		return Board::Board<FieldType>::getGtkPopupFieldMenu();
+	}
+
+	void hover_event(double x, double y)
+	{
+		try
+		{
+			lastHovered = &getAt(x, y);
+		}
+		catch(OutOfBoundsException)
+		{
+			lastHovered = nullptr;
+		}
 	}
 
 private:
-	void drawField(const HexField & field, Cairo::RefPtr<Cairo::Context> context) const
+	void drawField(const FieldType & field, Cairo::RefPtr<Cairo::Context> context) const
 	{
 		context->save();
 			context->scale(Width, Width);
@@ -110,7 +141,10 @@ private:
 				field.draw(context);
 			context->restore();
 
-			context->set_source_rgb(0, 0, 0);
+			if(&field == lastHovered)
+				context->set_source_rgb(1, 0, 0);
+			else
+				context->set_source_rgb(0, 0, 0);
 			context->set_line_width(0.1);
 			context->stroke();
 		context->restore();
@@ -118,8 +152,8 @@ private:
 
 	double fieldX(int x, int y) const { return (2 * x + y) * sin(M_PI / 3); }
 	double fieldY(int x, int y) const { return y * (1 + sin(M_PI / 6)); }
-	double fieldX(const HexField & field) const { return fieldX(field.x(), field.y()); }
-	double fieldY(const HexField & field) const { return fieldY(field.x(), field.y()); }
+	double fieldX(const FieldType & field) const { return fieldX(field.x(), field.y()); }
+	double fieldY(const FieldType & field) const { return fieldY(field.x(), field.y()); }
 
 	std::pair<int, int> toCoords(double x, double y)
 	{
@@ -219,6 +253,12 @@ private:
 
 	std::map<
 		std::pair<int, int>,
-		HexField
+		FieldType
 	> fields;
+
+	FieldType * lastHovered;
 };
+
+typedef HexBoard<HexField, 50> Board;
+
+} // namespace Hex

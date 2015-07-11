@@ -1,36 +1,30 @@
-#include <gtkmm-3.0/gtkmm.h>
+#include "Run.h"
 
 #include "HexBoard.h"
 #include "TriangleBoard.h"
-#include "Scene.h"
 
-class MyWindow : public Gtk::Window
+struct App
 {
-public:
-	MyWindow()
+	typedef Hex::Board BoardType;
+
+	std::string title() { return "Board - Avenger"; }
+
+	void init(BoardType & board)
 	{
-		box.pack_start(hex);
-		box.pack_start(triangle);
-		add(box);
-
-		maximize();
-
-		show_all_children();
+		printf("init\n");
+		board.addFieldAction("Action 1", [] (int x, int y) { printf("action1 %d %d\n", x, y); });
+		board.addFieldAction("Action 2", [] (int x, int y) { printf("action2 %d %d\n", x, y); });
+		board.addFieldAction("Action 3", [] (int x, int y) { printf("action3 %d %d\n", x, y); });
 	}
 
-	virtual ~MyWindow() { }
-
-private:
-	Scene< HexBoard<50> > hex;
-	Scene< TriangleBoard<50> > triangle;
-	Gtk::VBox box;
+	void main()
+	{
+		printf("mejn\n");
+	}
 };
 
 int main(int argc, char ** argv)
 {
-	Glib::RefPtr<Gtk::Application> app = Gtk::Application::create(argc, argv);
-	
-	MyWindow window;
-
-	return app->run(window);
+	Run<App>();
+	return 0;
 }

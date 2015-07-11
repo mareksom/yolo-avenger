@@ -2,6 +2,8 @@
 
 #include <bits/stdc++.h>
 
+namespace Board {
+
 class Field
 {
 public:
@@ -30,3 +32,31 @@ public:
 private:
 	double r, g, b;
 };
+
+template<typename FieldT>
+class Board
+{
+public:
+	typedef FieldT FieldType;
+
+protected:
+	void addFieldAction(const std::string & name, std::function<void(void)> callback)
+	{
+		auto menuItem = std::make_shared<Gtk::MenuItem>(name);
+		popupFieldMenuItems.push_back(menuItem);
+		menuItem->signal_activate().connect(callback);
+		menuItem->show();
+		popupFieldMenu.append(*menuItem);
+	}
+
+	Gtk::Menu & getGtkPopupFieldMenu()
+	{
+		return popupFieldMenu;
+	}
+
+private:
+	Gtk::Menu popupFieldMenu;
+	std::vector< std::shared_ptr<Gtk::MenuItem> > popupFieldMenuItems;
+};
+
+} // namespace Board

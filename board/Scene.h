@@ -6,10 +6,13 @@ template<typename Board>
 class Scene : public Gtk::DrawingArea
 {
 public:
-	Scene() : transX(0.0), transY(0.0), zoom(1.0)
+	typedef typename Board::FieldType FieldType;
+
+	Scene(Board & board) : board(board), transX(0.0), transY(0.0), zoom(1.0)
 	{
 		add_events(Gdk::SCROLL_MASK);
 		add_events(Gdk::POINTER_MOTION_MASK);
+		add_events(Gdk::BUTTON_PRESS_MASK);
 	}
 
 	virtual ~Scene() { }
@@ -26,22 +29,7 @@ public:
 
 	virtual bool on_motion_notify_event(GdkEventMotion * event) override
 	{
-		try
-		{
-			static typename Board::FieldType * last = nullptr;
-			if(last != nullptr)
-				last->setColor(
-					(double) rand() / RAND_MAX,
-					(double) rand() / RAND_MAX,
-					(double) rand() / RAND_MAX
-				);
-			last = nullptr;
-			last = &board.getAt((event->x + transX) / zoom, (event->y + transY) / zoom);
-			last->setColor(0, 0, 0);
-		}
-		catch(typename Board::OutOfBoundsException)
-		{
-		}
+		board.hover_event(xFromPointer(event->x), yFromPointer(event->y));
 		queue_draw();
 		return true;
 	}
@@ -53,8 +41,8 @@ public:
 			/* Zoom in/out */
 			if(event->direction == GDK_SCROLL_UP or event->direction == GDK_SCROLL_DOWN)
 			{
-				const double underX = (event->x + transX) / zoom;
-				const double underY = (event->y + transY) / zoom;
+				const double underX = xFromPointer(event->x);
+				const double underY = yFromPointer(event->y);
 				if(event->direction == GDK_SCROLL_UP)
 					zoom *= 1.2;
 				else
@@ -75,15 +63,35 @@ public:
 				transX -= delta;
 			else if(event->direction == GDK_SCROLL_RIGHT)
 				transX += delta;
-			else if(event->direction == GDK_SCROLL_SMOOTH)
-				std::cout << "smooth" << std::endl;
+			board.hover_event(xFromPointer(event->x), yFromPointer(event->y));
 		}
 		queue_draw();
 		return true;
 	}
 
-private:
-	double transX, transY, zoom;
+	virtual bool on_button_press_event(GdkEventButton * event) override
+	{
+		if(event->button == 3)
+		{
+			try
+			{
+				board.hover_event(xFromPointer(event->x), yFromPointer(event->y));
+				board.getGtkPopupFieldMenu().popup(event->button, event->time);
+				return true;
+			}
+			catch(typename Board::OutOfBoundsException)
+			{
+			}
+		}
+		queue_draw();
+		return false;
+	}
 
-	Board board;
+private:
+	double xFromPointer(double x) { return (x + transX) / zoom; }
+	double yFromPointer(double y) { return (y + transY) / zoom; }
+
+	Board & board;
+
+	double transX, transY, zoom;
 };

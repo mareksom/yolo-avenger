@@ -1,9 +1,9 @@
 BUILD = build
 CPP = clang++
-CPPFLAGS = -std=c++11 `pkg-config gtkmm-3.0 --cflags`
+CPPFLAGS = -pthread -std=c++11 -g `pkg-config gtkmm-3.0 --cflags`
 LDFLAGS = `pkg-config gtkmm-3.0 --cflags --libs`
 OBJS = main.o
-HEADERS = HexBoard.h TriangleBoard.h Board.h Scene.h
+HEADERS = HexBoard.h TriangleBoard.h Board.h Scene.h Run.h
 
 all: $(BUILD)/run
 
