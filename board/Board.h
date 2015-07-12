@@ -76,6 +76,14 @@ protected:
 		popupFieldMenu.append(*menuItem);
 	}
 
+	void addFieldSeparator()
+	{
+		auto menuItem = std::make_shared<Gtk::SeparatorMenuItem>();
+		popupFieldMenuItems.push_back(menuItem);
+		menuItem->show();
+		popupFieldMenu.append(*menuItem);
+	}
+
 	Gtk::Menu * getGtkPopupFieldMenu(uint64_t id)
 	{
 		lastID = id;

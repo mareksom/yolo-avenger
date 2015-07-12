@@ -47,6 +47,11 @@ public:
 		});
 	}
 
+	void addFieldSeparator()
+	{
+		Parent::addFieldSeparator();
+	}
+
 	Gtk::Menu * getGtkPopupFieldMenu()
 	{
 		if(m_fieldHovered == nullptr)

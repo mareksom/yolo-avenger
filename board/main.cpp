@@ -16,6 +16,8 @@ struct App
 		board.addFieldAction("Action 2", [] (int x, int y) { printf("action2 %d %d\n", x, y); });
 		board.addFieldAction("Action 3", [] (int x, int y) { printf("action3 %d %d\n", x, y); });
 
+		board.addFieldSeparator();
+
 		board.addFieldCheckButton("Check 1", [] (int x, int y, bool state) { printf("check1 %d %d %s\n", x, y, state ? "true" : "false"); });
 		board.addFieldCheckButton("Check 2", [] (int x, int y, bool state) { printf("check2 %d %d %s\n", x, y, state ? "true" : "false"); });
 	}
