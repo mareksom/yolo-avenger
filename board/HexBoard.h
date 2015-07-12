@@ -1,26 +1,24 @@
 #pragma once
 
 #include "Board.h"
+#include "XYBoard.h"
 
 #include <bits/stdc++.h>
 
 namespace Hex {
 
-class HexField : public Board::Field
+class HexField : public Board::Field, public XY::XYField
 {
 public:
-	HexField(int x, int y) : Field(), mx(x), my(y)
+	HexField(int x, int y) : Field(), XY::XYField(x, y)
 	{
 	}
-
-	int x() const { return mx; }
-	int y() const { return my; }
 
 	void draw(Cairo::RefPtr<Cairo::Context> context) const
 	{
 		Field::draw(context);
 
-		auto s = "(" + std::to_string(mx) + ", " + std::to_string(my) + ")";
+		auto s = coordinatesString();
 
 		context->save();
 			Cairo::TextExtents te;
@@ -31,18 +29,18 @@ public:
 			context->show_text(s);
 		context->restore();
 	}
-
-private:
-	int mx, my;
 };
 
 template<typename FieldT, int Width>
-class HexBoard : public Board::Board<FieldT>
+class HexBoard :
+	public XY::XYBoard< Board::Board<FieldT> >
 {
-public:
-	typedef typename Board::Board<FieldT>::FieldType FieldType;
+	typedef typename XY::XYBoard< Board::Board<FieldT> > Parent;
 
-	HexBoard() : lastHovered(nullptr)
+public:
+	typedef typename Parent::FieldType FieldType;
+
+	HexBoard()
 	{
 		for(int i = 0; i < 20; i++)
 			for(int j = 0; j < 20; j++)
@@ -54,8 +52,8 @@ public:
 	{
 		for(auto & field : fields)
 			drawField(field.second, context);
-		if(lastHovered)
-			drawField(*lastHovered, context);
+		if(Parent::fieldHovered())
+			drawField(*Parent::fieldHovered(), context);
 	}
 
 	class OutOfBoundsException : public std::exception
@@ -95,30 +93,15 @@ public:
 		return (*this)(coordinates.first, coordinates.second);
 	}
 
-	void addFieldAction(const std::string & name, std::function<void(int, int)> f)
-	{
-		Board::Board<FieldType>::addFieldAction(name, [f, this] () {
-			if(this->lastHovered)
-				f(this->lastHovered->x(), this->lastHovered->y());
-		});
-	}
-
-	Gtk::Menu & getGtkPopupFieldMenu()
-	{
-		if(lastHovered == nullptr)
-			throw OutOfBoundsException();
-		return Board::Board<FieldType>::getGtkPopupFieldMenu();
-	}
-
 	void hover_event(double x, double y)
 	{
 		try
 		{
-			lastHovered = &getAt(x, y);
+			Parent::hover(&getAt(x, y));
 		}
 		catch(OutOfBoundsException)
 		{
-			lastHovered = nullptr;
+			Parent::hover(nullptr);
 		}
 	}
 
@@ -141,7 +124,7 @@ private:
 				field.draw(context);
 			context->restore();
 
-			if(&field == lastHovered)
+			if(&field == Parent::fieldHovered())
 				context->set_source_rgb(1, 0, 0);
 			else
 				context->set_source_rgb(0, 0, 0);
@@ -255,8 +238,6 @@ private:
 		std::pair<int, int>,
 		FieldType
 	> fields;
-
-	FieldType * lastHovered;
 };
 
 typedef HexBoard<HexField, 50> Board;

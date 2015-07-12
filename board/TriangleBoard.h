@@ -1,28 +1,26 @@
 #pragma once
 
 #include "Board.h"
+#include "XYBoard.h"
 
 #include <bits/stdc++.h>
 
 namespace Triangle {
 
-class TriangleField : public Board::Field
+class TriangleField : public Board::Field, public XY::XYField
 {
 public:
-	TriangleField(int x, int y) : Field(), mx(x), my(y)
+	TriangleField(int x, int y) : XY::XYField(x, y)
 	{
 	}
 
-	int x() const { return mx; }
-	int y() const { return my; }
-
-	bool upsideDown() const { return mx % 2 != 0; }
+	bool upsideDown() const { return x() % 2 != 0; }
 
 	void draw(Cairo::RefPtr<Cairo::Context> context) const
 	{
 		Field::draw(context);
 
-		auto s = "(" + std::to_string(mx) + ", " + std::to_string(my) + ")";
+		auto s = coordinatesString();
 
 		context->save();
 			Cairo::TextExtents te;
@@ -34,18 +32,18 @@ public:
 			context->show_text(s);
 		context->restore();
 	}
-
-private:
-	int mx, my;
 };
 
 template<typename FieldT, int Width>
-class TriangleBoard : public Board::Board<FieldT>
+class TriangleBoard :
+	public XY::XYBoard< Board::Board<FieldT> >
 {
-public:
-	typedef typename Board::Board<FieldT>::FieldType FieldType;
+	typedef typename XY::XYBoard< Board::Board<FieldT> > Parent;
 
-	TriangleBoard() : lastHovered(nullptr)
+public:
+	typedef typename Parent::FieldType FieldType;
+
+	TriangleBoard()
 	{
 		for(int i = 0; i < 20; i++)
 			for(int j = 0; j < 20; j++)
@@ -57,8 +55,8 @@ public:
 	{
 		for(auto & field : fields)
 			drawField(field.second, context);
-		if(lastHovered)
-			drawField(*lastHovered, context);
+		if(Parent::fieldHovered())
+			drawField(*Parent::fieldHovered(), context);
 	}
 
 	class OutOfBoundsException : public std::exception
@@ -98,30 +96,15 @@ public:
 		return (*this)(coordinates.first, coordinates.second);
 	}
 
-	void addFieldAction(const std::string & name, std::function<void(int, int)> f)
-	{
-		Board::Board<FieldType>::addFieldAction(name, [f, this] () {
-			if(this->lastHovered)
-				f(this->lastHovered->x(), this->lastHovered->y());
-		});
-	}
-
-	Gtk::Menu & getGtkPopupFieldMenu()
-	{
-		if(lastHovered == nullptr)
-			throw OutOfBoundsException();
-		return Board::Board<FieldType>::getGtkPopupFieldMenu();
-	}
-
 	void hover_event(double x, double y)
 	{
 		try
 		{
-			lastHovered = &getAt(x, y);
+			Parent::hover(&getAt(x, y));
 		}
 		catch(OutOfBoundsException)
 		{
-			lastHovered = nullptr;
+			Parent::hover(nullptr);
 		}
 	}
 
@@ -152,7 +135,7 @@ private:
 				field.draw(context);
 			context->restore();
 
-			if(&field == lastHovered)
+			if(&field == Parent::fieldHovered())
 				context->set_source_rgb(1, 0, 0);
 			else
 				context->set_source_rgb(0, 0, 0);
@@ -254,8 +237,6 @@ private:
 		std::pair<int, int>,
 		FieldType
 	> fields;
-
-	FieldType * lastHovered;
 };
 
 typedef TriangleBoard<TriangleField, 100> Board;

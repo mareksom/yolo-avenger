@@ -73,15 +73,11 @@ public:
 	{
 		if(event->button == 3)
 		{
-			try
-			{
-				board.hover_event(xFromPointer(event->x), yFromPointer(event->y));
-				board.getGtkPopupFieldMenu().popup(event->button, event->time);
-				return true;
-			}
-			catch(typename Board::OutOfBoundsException)
-			{
-			}
+			board.hover_event(xFromPointer(event->x), yFromPointer(event->y));
+			auto menu = board.getGtkPopupFieldMenu();
+			if(menu != nullptr)
+				menu->popup(event->button, event->time);
+			return true;
 		}
 		queue_draw();
 		return false;
