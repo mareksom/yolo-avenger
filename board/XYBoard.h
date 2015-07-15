@@ -31,32 +31,11 @@ class XYBoard : public Parent
 public:
 	typedef typename Parent::FieldType FieldType;
 
-	void addFieldAction(const std::string & name, std::function<void(int, int)> f)
-	{
-		Parent::addFieldAction(name, [this, f] () {
-			if(m_fieldHovered != nullptr)
-				f(m_fieldHovered->x(), m_fieldHovered->y());
-		});
-	}
-
-	void addFieldCheckButton(const std::string & name, std::function<void(int, int, bool)> f)
-	{
-		Parent::addFieldCheckButton(name, [this, f] (bool b) {
-			if(m_fieldHovered != nullptr)
-				f(m_fieldHovered->x(), m_fieldHovered->y(), b);
-		});
-	}
-
-	void addFieldSeparator()
-	{
-		Parent::addFieldSeparator();
-	}
-
 	Gtk::Menu * getGtkPopupFieldMenu()
 	{
 		if(m_fieldHovered == nullptr)
 			return nullptr;
-		return Parent::getGtkPopupFieldMenu(m_fieldHovered->id());
+		return m_fieldHovered->getPopupMenu();
 	}
 
 protected:

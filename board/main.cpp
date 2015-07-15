@@ -3,6 +3,8 @@
 #include "HexBoard.h"
 #include "TriangleBoard.h"
 
+bool tab[105][105];
+
 struct App
 {
 	typedef Hex::Board BoardType;
@@ -12,14 +14,17 @@ struct App
 	void init(BoardType & board)
 	{
 		printf("init\n");
-		board.addFieldAction("Action 1", [] (int x, int y) { printf("action1 %d %d\n", x, y); });
-		board.addFieldAction("Action 2", [] (int x, int y) { printf("action2 %d %d\n", x, y); });
-		board.addFieldAction("Action 3", [] (int x, int y) { printf("action3 %d %d\n", x, y); });
-
-		board.addFieldSeparator();
-
-		board.addFieldCheckButton("Check 1", [] (int x, int y, bool state) { printf("check1 %d %d %s\n", x, y, state ? "true" : "false"); });
-		board.addFieldCheckButton("Check 2", [] (int x, int y, bool state) { printf("check2 %d %d %s\n", x, y, state ? "true" : "false"); });
+		for(int i = 0; i < 20; i++)
+		{
+			for(int j = 0; j < 20; j++)
+			{
+				for(int k = 0; k < i + j; k++)
+					board(i, j).addPopupAction("Action " + std::to_string(k), [i, j, k] () { printf("Akcja %d (%d, %d).\n", k, i, j); });
+				board(i, j).addPopupSeparator();
+				board(i, j).addPopupCheckAction("Bool", tab[i][j], [i, j] (bool stan) { printf("Bool (%d, %d) = %d = %d.\n", i, j, (int) stan, (int) tab[i][j]); });
+			}
+		}
+		tab[5][5] = true;
 	}
 
 	void main()

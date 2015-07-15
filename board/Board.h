@@ -10,10 +10,9 @@ public:
 	Field() :
 		r((double) rand() / RAND_MAX),
 		g((double) rand() / RAND_MAX),
-		b((double) rand() / RAND_MAX)
+		b((double) rand() / RAND_MAX),
+		popupMenu(std::make_shared<Gtk::Menu>())
 	{
-		static uint64_t nextID = 0;
-		mid = nextID++;
 	}
 
 	void setColor(double r, double g, double b)
@@ -31,11 +30,57 @@ public:
 		context->restore();
 	}
 
-	uint64_t id() const { return mid; }
+	void addPopupAction(const std::string & name, std::function<void(void)> f)
+	{
+		auto menuItem = std::make_shared<Gtk::MenuItem>(name);
+		popupMenuItems.push_back(menuItem);
+		menuItem->signal_activate().connect(f);
+		menuItem->show();
+		popupMenu->append(*menuItem);
+	}
+
+	/* After passing variable to this function, you can change its value in the code,
+	 * but be careful -- it change may not propagate properly when the menu is opened */
+	void addPopupCheckAction(const std::string & name, bool & variable, std::function<void(bool)> f)
+	{
+		auto menuItem = std::make_shared<Gtk::CheckMenuItem>(name);
+		popupCheckMenuItems.emplace_back(&variable, menuItem);
+		menuItem->signal_toggled().connect(
+			[this, f, menuItem, &variable] () {
+				if(!popupCheckMenuItems_isFake)
+					f(variable = menuItem->get_active());
+			}
+		);
+		menuItem->show();
+		popupMenu->append(*menuItem);
+	}
+
+	void addPopupSeparator()
+	{
+		auto menuItem = std::make_shared<Gtk::SeparatorMenuItem>();
+		popupMenuItems.push_back(menuItem);
+		menuItem->show();
+		popupMenu->append(*menuItem);
+	}
+
+	Gtk::Menu * getPopupMenu()
+	{
+		if(popupMenuItems.empty() and popupCheckMenuItems.empty())
+			return nullptr;
+		popupCheckMenuItems_isFake = true;
+		for(auto & item : popupCheckMenuItems)
+			item.second->set_active(*item.first);
+		popupCheckMenuItems_isFake = false;
+		return popupMenu.get();
+	}
 
 private:
 	double r, g, b;
-	uint64_t mid;
+
+	std::shared_ptr<Gtk::Menu> popupMenu;
+	std::vector< std::shared_ptr<Gtk::MenuItem> > popupMenuItems;
+	bool popupCheckMenuItems_isFake;
+	std::vector< std::pair< bool*, std::shared_ptr<Gtk::CheckMenuItem> > > popupCheckMenuItems;
 };
 
 template<typename FieldT>
@@ -44,69 +89,7 @@ class Board
 public:
 	typedef FieldT FieldType;
 
-protected:
-	void addFieldAction(const std::string & name, std::function<void(void)> callback)
-	{
-		auto menuItem = std::make_shared<Gtk::MenuItem>(name);
-		popupFieldMenuItems.push_back(menuItem);
-		menuItem->signal_activate().connect(
-			[this, callback] () {
-				if(!fakeSignals)
-					callback();
-			}
-		);
-		menuItem->show();
-		popupFieldMenu.append(*menuItem);
-	}
-
-	void addFieldCheckButton(const std::string & name, std::function<void(bool)> callback)
-	{
-		auto menuItem = std::make_shared<Gtk::CheckMenuItem>(name);
-		popupFieldMenuItems.push_back(menuItem);
-		popupFieldCheckMenuItems.push_back(menuItem);
-		menuItem->signal_toggled().connect(
-			[this, callback, menuItem] () {
-				if(!fakeSignals)
-					callback(
-						checkStates[std::make_pair(lastID, std::string(menuItem->get_label()))] = menuItem->get_active()
-					);
-			}
-		);
-		menuItem->show();
-		popupFieldMenu.append(*menuItem);
-	}
-
-	void addFieldSeparator()
-	{
-		auto menuItem = std::make_shared<Gtk::SeparatorMenuItem>();
-		popupFieldMenuItems.push_back(menuItem);
-		menuItem->show();
-		popupFieldMenu.append(*menuItem);
-	}
-
-	Gtk::Menu * getGtkPopupFieldMenu(uint64_t id)
-	{
-		lastID = id;
-		fakeSignals = true;
-		for(auto & checkMenuItem : popupFieldCheckMenuItems)
-		{
-			checkMenuItem->set_active(
-				checkStates[std::make_pair(id, std::string(checkMenuItem->get_label()))]
-			);
-		}
-		fakeSignals = false;
-		return &popupFieldMenu;
-	}
-
 private:
-	uint64_t lastID;
-	bool fakeSignals;
-
-	Gtk::Menu popupFieldMenu;
-	std::vector< std::shared_ptr<Gtk::MenuItem> > popupFieldMenuItems;
-	std::vector< std::shared_ptr<Gtk::CheckMenuItem> > popupFieldCheckMenuItems;
-
-	std::map< std::pair<uint64_t, std::string> , bool> checkStates;
 };
 
 } // namespace Board
