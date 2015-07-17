@@ -42,16 +42,19 @@ public:
 
 	HexBoard()
 	{
-		for(int i = 0; i < 20; i++)
-			for(int j = 0; j < 20; j++)
+		for(int i = 0; i < 1000; i++)
+			for(int j = 0; j < 1000; j++)
 				fields.emplace(std::make_pair(i, j), FieldType(i, j));
 	}
 
 	void draw(Cairo::RefPtr<Cairo::Context> context,
-		double x, double y, double width, double height) const
+		double x, double y, double width, double height)
 	{
-		for(auto & field : fields)
-			drawField(field.second, context);
+		forEachFieldInRect(x, y, width, height,
+			[this, context] (FieldType & field) {
+				drawField(field, context);
+			}
+		);
 		if(Parent::fieldHovered())
 			drawField(*Parent::fieldHovered(), context);
 	}
@@ -103,6 +106,15 @@ public:
 		{
 			Parent::hover(nullptr);
 		}
+	}
+
+	void setSelection(double x, double y, double width, double height)
+	{
+		this->clearSelection();
+		forEachFieldInRect(
+			x, y, width, height,
+			[this] (FieldType & f) { this->addToSelection(&f); }
+		);
 	}
 
 private:
@@ -232,6 +244,32 @@ private:
 		ry += r - (2 * r - 1) * dif;
 		rx = (dif + rx - ry) / 2;
 		return result;
+	}
+
+	void forEachFieldInRect(double x, double y, double width, double height, std::function<void(FieldType&)> f)
+	{
+		const double rectWidth = Width * sin(M_PI / 3);
+		const double rectHeight = Width * (1 + sin(M_PI / 6));
+
+		const int rx = std::floor(x / rectWidth);
+		const int ry = std::floor(y / rectHeight);
+		const int rX = std::floor((x + width) / rectWidth);
+		const int rY = std::floor((y + height) / rectHeight);
+
+		for(int x = rx; x <= rX; x++)
+		{
+			for(int y = ry; y <= rY + 1; y++)
+			{
+				auto it = fields.find(
+					std::make_pair(
+						(x + ((x + y) % 2 + 2) % 2 - y) / 2,
+						y
+					)
+				);
+				if(it != fields.end())
+					f(it->second);
+			}
+		}
 	}
 
 	std::map<

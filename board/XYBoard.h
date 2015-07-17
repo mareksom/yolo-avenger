@@ -33,9 +33,19 @@ public:
 
 	Gtk::Menu * getGtkPopupFieldMenu()
 	{
+		/*
 		if(m_fieldHovered == nullptr)
 			return nullptr;
 		return m_fieldHovered->getPopupMenu();
+		*/
+		return nullptr;
+	}
+
+	void clearSelection()
+	{
+		for(auto f : selectedFields)
+			f->deselect();
+		selectedFields.clear();
 	}
 
 protected:
@@ -58,8 +68,16 @@ protected:
 		return m_fieldHovered;
 	}
 
+	void addToSelection(FieldType * field)
+	{
+		field->select();
+		selectedFields.push_back(field);
+	}
+
 private:
 	FieldType * m_fieldHovered;
+
+	std::vector<FieldType*> selectedFields;
 };
 
 } // namespace XY

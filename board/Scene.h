@@ -8,11 +8,15 @@ class Scene : public Gtk::DrawingArea
 public:
 	typedef typename Board::FieldType FieldType;
 
-	Scene(Board & board) : board(board), transX(0.0), transY(0.0), zoom(1.0)
+	Scene(Board & board) :
+		board(board),
+		transX(0.0), transY(0.0), zoom(1.0),
+		selectionStarted(false), selectionValid(false)
 	{
 		add_events(Gdk::SCROLL_MASK);
 		add_events(Gdk::POINTER_MOTION_MASK);
 		add_events(Gdk::BUTTON_PRESS_MASK);
+		add_events(Gdk::BUTTON_RELEASE_MASK);
 	}
 
 	virtual ~Scene() { }
@@ -22,13 +26,21 @@ public:
 		context->save();
 			context->translate(-transX, -transY);
 			context->scale(zoom, zoom);
-			board.draw(context, -transX, -transX, get_width(), get_height());
+			board.draw(context, xFromPointer(0), yFromPointer(0), get_width() / zoom, get_height() / zoom);
+			if(selectionValid)
+			{
+				context->save();
+					context->rectangle(selectionX, selectionY, selectionWidth, selectionHeight);
+					context->stroke();
+				context->restore();
+			}
 		context->restore();
 		return true;
 	}
 
 	virtual bool on_motion_notify_event(GdkEventMotion * event) override
 	{
+		updateSelection(xFromPointer(event->x), yFromPointer(event->y));
 		board.hover_event(xFromPointer(event->x), yFromPointer(event->y));
 		queue_draw();
 		return true;
@@ -65,13 +77,22 @@ public:
 				transX += delta;
 			board.hover_event(xFromPointer(event->x), yFromPointer(event->y));
 		}
+		updateSelection(xFromPointer(event->x), yFromPointer(event->y));
 		queue_draw();
 		return true;
 	}
 
 	virtual bool on_button_press_event(GdkEventButton * event) override
 	{
-		if(event->button == 3)
+		selectionStarted = selectionValid = false;
+		if(event->button == 1)
+		{
+			selectionStarted = true;
+			selectionX = xFromPointer(event->x);
+			selectionY = yFromPointer(event->y);
+			updateSelection(selectionX, selectionY);
+		}
+		else if(event->button == 3)
 		{
 			board.hover_event(xFromPointer(event->x), yFromPointer(event->y));
 			auto menu = board.getGtkPopupFieldMenu();
@@ -83,6 +104,32 @@ public:
 		return false;
 	}
 
+	virtual bool on_button_release_event(GdkEventButton * event) override
+	{
+		selectionStarted = false;
+		return false;
+	}
+
+	void updateSelection(double x, double y)
+	{
+		if(selectionStarted)
+		{
+			selectionWidth = x - selectionX;
+			selectionHeight = y - selectionY;
+			selectionValid = abs(selectionWidth) > 10 and abs(selectionHeight) > 10;
+			if(selectionValid)
+			{
+				double x = std::min(selectionX, selectionX + selectionWidth);
+				double y = std::min(selectionY, selectionY + selectionHeight);
+				double width = std::max(selectionX, selectionX + selectionWidth) - x;
+				double height = std::max(selectionY, selectionY + selectionHeight) - y;
+				board.setSelection(x, y, width, height);
+			}
+			else
+				board.clearSelection();
+		}
+	}
+
 private:
 	double xFromPointer(double x) { return (x + transX) / zoom; }
 	double yFromPointer(double y) { return (y + transY) / zoom; }
@@ -90,4 +137,8 @@ private:
 	Board & board;
 
 	double transX, transY, zoom;
+
+	bool selectionStarted;
+	bool selectionValid;
+	double selectionX, selectionY, selectionWidth, selectionHeight;
 };

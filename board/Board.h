@@ -11,7 +11,8 @@ public:
 		r((double) rand() / RAND_MAX),
 		g((double) rand() / RAND_MAX),
 		b((double) rand() / RAND_MAX),
-		popupMenu(std::make_shared<Gtk::Menu>())
+		m_selected(false)//,
+		//popupMenu(std::make_shared<Gtk::Menu>())
 	{
 	}
 
@@ -25,11 +26,30 @@ public:
 	void draw(Cairo::RefPtr<Cairo::Context> context) const
 	{
 		context->save();
-			context->set_source_rgb(r, g, b);
+			if(selected())
+				context->set_source_rgb(1, 1, 1);
+			else
+				context->set_source_rgb(r, g, b);
 			context->paint();
 		context->restore();
 	}
 
+	void select()
+	{
+		m_selected = true;
+	}
+
+	void deselect()
+	{
+		m_selected = false;
+	}
+
+	bool selected() const
+	{
+		return m_selected;
+	}
+
+	/*
 	void addPopupAction(const std::string & name, std::function<void(void)> f)
 	{
 		auto menuItem = std::make_shared<Gtk::MenuItem>(name);
@@ -38,9 +58,11 @@ public:
 		menuItem->show();
 		popupMenu->append(*menuItem);
 	}
+	*/
 
 	/* After passing variable to this function, you can change its value in the code,
 	 * but be careful -- it change may not propagate properly when the menu is opened */
+	/*
 	void addPopupCheckAction(const std::string & name, bool & variable, std::function<void(bool)> f)
 	{
 		auto menuItem = std::make_shared<Gtk::CheckMenuItem>(name);
@@ -73,14 +95,19 @@ public:
 		popupCheckMenuItems_isFake = false;
 		return popupMenu.get();
 	}
+	*/
 
 private:
 	double r, g, b;
 
+	bool m_selected;
+
+	/*
 	std::shared_ptr<Gtk::Menu> popupMenu;
 	std::vector< std::shared_ptr<Gtk::MenuItem> > popupMenuItems;
 	bool popupCheckMenuItems_isFake;
 	std::vector< std::pair< bool*, std::shared_ptr<Gtk::CheckMenuItem> > > popupCheckMenuItems;
+	*/
 };
 
 template<typename FieldT>

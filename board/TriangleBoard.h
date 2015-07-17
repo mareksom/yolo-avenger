@@ -45,16 +45,19 @@ public:
 
 	TriangleBoard()
 	{
-		for(int i = 0; i < 20; i++)
-			for(int j = 0; j < 20; j++)
+		for(int i = 0; i < 1000; i++)
+			for(int j = 0; j < 1000; j++)
 				fields.emplace(std::make_pair(i, j), FieldType(i, j));
 	}
 	
 	void draw(Cairo::RefPtr<Cairo::Context> context,
-		double x, double y, double width, double height) const
+		double x, double y, double width, double height)
 	{
-		for(auto & field : fields)
-			drawField(field.second, context);
+		forEachFieldInRect(x, y, width, height,
+			[this, context] (FieldType & field) {
+				drawField(field, context);
+			}
+		);
 		if(Parent::fieldHovered())
 			drawField(*Parent::fieldHovered(), context);
 	}
@@ -106,6 +109,15 @@ public:
 		{
 			Parent::hover(nullptr);
 		}
+	}
+
+	void setSelection(double x, double y, double width, double height)
+	{
+		this->clearSelection();
+		forEachFieldInRect(
+			x, y, width, height,
+			[this] (FieldType & f) { this->addToSelection(&f); }
+		);
 	}
 
 private:
@@ -231,6 +243,37 @@ private:
 				+ 2 * ((rx % 2 + 2) % 2) * (y - rectHeight * (ry + 0.5))
 			) < 0) rx--;
 		return result;
+	}
+
+	void forEachFieldInRect(double x, double y, double width, double height, std::function<void(FieldType&)> f)
+	{
+		const double rectWidth = (double) Width / 2;
+		const double rectHeight = (Width * sqrt(3)) / 2;
+
+		x += rectWidth;
+		y += rectHeight / 2;
+
+		const int rx = std::floor(x / rectWidth);
+		const int ry = std::floor(y / rectHeight);
+		const int rX = std::floor((x + width) / rectWidth);
+		const int rY = std::floor((y + height) / rectHeight);
+
+		const int l = 0;
+
+		for(int x = rx - 1; x <= rX; x++)
+		{
+			for(int y = ry; y <= rY; y++)
+			{
+				auto it = fields.find(
+					std::make_pair(
+						x - y,
+						y
+					)
+				);
+				if(it != fields.end())
+					f(it->second);
+			}
+		}
 	}
 
 	std::map<

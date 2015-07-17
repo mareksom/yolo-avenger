@@ -7,13 +7,14 @@ bool tab[105][105];
 
 struct App
 {
-	typedef Hex::Board BoardType;
+	typedef Triangle::Board BoardType;
 
 	std::string title() { return "Board - Avenger"; }
 
 	void init(BoardType & board)
 	{
 		printf("init\n");
+		/*
 		for(int i = 0; i < 20; i++)
 		{
 			for(int j = 0; j < 20; j++)
@@ -25,6 +26,7 @@ struct App
 			}
 		}
 		tab[5][5] = true;
+		*/
 	}
 
 	void main()
