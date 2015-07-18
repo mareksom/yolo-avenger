@@ -1,16 +1,15 @@
 #pragma once
 
 #include "Board.h"
-#include "XYBoard.h"
 
 #include <bits/stdc++.h>
 
 namespace Triangle {
 
-class TriangleField : public Board::Field, public XY::XYField
+class TriangleField : public Board::Field
 {
 public:
-	TriangleField(int x, int y) : XY::XYField(x, y)
+	TriangleField(int x, int y) : Board::Field(x, y)
 	{
 	}
 
@@ -34,111 +33,52 @@ public:
 	}
 };
 
-template<typename FieldT, int Width>
-class TriangleBoard :
-	public XY::XYBoard< Board::Board<FieldT> >
+template<typename FieldType, int Width>
+class TriangleBoard : public Board::Board<FieldType>
 {
-	typedef typename XY::XYBoard< Board::Board<FieldT> > Parent;
+	typedef typename Board::Board<FieldType> Parent;
+
+	static constexpr double sqrt_3 = 1.7320508075688772;
+	static constexpr double sqrt_3_div_2 = sqrt_3 / 2;
+	static constexpr double sqrt_3_div_4 = sqrt_3 / 4;
+	static constexpr double negative_sqrt_3 = -sqrt_3;
+	static constexpr double negative_sqrt_3_div_2 = -sqrt_3_div_2;
+	static constexpr double negative_sqrt_3_div_4 = -sqrt_3_div_4;
+
+	static constexpr double rectWidth = (double) Width / 2;
+	static constexpr double rectHeight = Width * sqrt_3_div_2;
+	static constexpr double rectHeight_div_2 = rectHeight / 2;
 
 public:
-	typedef typename Parent::FieldType FieldType;
-
 	TriangleBoard()
 	{
 		for(int i = 0; i < 1000; i++)
 			for(int j = 0; j < 1000; j++)
-				fields.emplace(std::make_pair(i, j), FieldType(i, j));
-	}
-	
-	void draw(Cairo::RefPtr<Cairo::Context> context,
-		double x, double y, double width, double height)
-	{
-		forEachFieldInRect(x, y, width, height,
-			[this, context] (FieldType & field) {
-				drawField(field, context);
-			}
-		);
-		if(Parent::fieldHovered())
-			drawField(*Parent::fieldHovered(), context);
-	}
-
-	class OutOfBoundsException : public std::exception
-	{
-	public:
-		const char * what() const noexcept override
-		{
-			return "TriangleBoard::OutOfBoundsException";
-		}
-	};
-
-	FieldType & operator () (int x, int y)
-	{
-		auto it = fields.find(std::make_pair(x, y));
-		if(it == fields.end())
-			throw OutOfBoundsException();
-		return it->second;
-	}
-
-	const FieldType & operator () (int x, int y) const
-	{
-		auto it = fields.find(std::make_pair(x, y));
-		if(it == fields.end())
-			throw OutOfBoundsException();
-		return it->second;
-	}
-
-	FieldType & getAt(double x, double y)
-	{
-		auto coordinates = toCoords(x, y);
-		return (*this)(coordinates.first, coordinates.second);
-	}
-
-	const FieldType & getAt(double x, double y) const
-	{
-		auto coordinates = toCoords(x, y);
-		return (*this)(coordinates.first, coordinates.second);
-	}
-
-	void hover_event(double x, double y)
-	{
-		try
-		{
-			Parent::hover(&getAt(x, y));
-		}
-		catch(OutOfBoundsException)
-		{
-			Parent::hover(nullptr);
-		}
-	}
-
-	void setSelection(double x, double y, double width, double height)
-	{
-		this->clearSelection();
-		forEachFieldInRect(
-			x, y, width, height,
-			[this] (FieldType & f) { this->addToSelection(&f); }
-		);
+				Parent::operator () (i, j);
 	}
 
 private:
-	void drawField(const FieldType & field, Cairo::RefPtr<Cairo::Context> context) const
+	virtual void drawField(const FieldType & field, Cairo::RefPtr<Cairo::Context> context) override
 	{
 		context->save();
 			context->scale(Width, Width);
-			context->translate(fieldX(field), fieldY(field));
+			context->translate(
+				(double) (field.x() + field.y()) / 2,
+				field.y() * sqrt_3_div_2
+			);
 
 			if(field.upsideDown())
 			{
-				context->move_to(0, -sqrt(3) / 4);
-				context->line_to(-0.5, sqrt(3) / 4);
-				context->line_to(0.5, sqrt(3) / 4);
+				context->move_to(0, negative_sqrt_3_div_4);
+				context->line_to(-0.5, sqrt_3_div_4);
+				context->line_to(0.5, sqrt_3_div_4);
 				context->close_path();
 			}
 			else
 			{
-				context->move_to(0, sqrt(3) / 4);
-				context->line_to(-0.5, -sqrt(3) / 4);
-				context->line_to(0.5, -sqrt(3) / 4);
+				context->move_to(0, sqrt_3_div_4);
+				context->line_to(-0.5, negative_sqrt_3_div_4);
+				context->line_to(0.5, negative_sqrt_3_div_4);
 				context->close_path();
 			}
 
@@ -157,77 +97,10 @@ private:
 		context->restore();
 	}
 
-	double fieldX(int x, int y) const { return (double) (x + y) / 2; }
-	double fieldY(int x, int y) const { return y * sqrt(3) / 2; }
-	double fieldX(const FieldType & field) const { return fieldX(field.x(), field.y()); }
-	double fieldY(const FieldType & field) const { return fieldY(field.x(), field.y()); }
-
-	std::pair<int, int> toCoords(double x, double y)
+	virtual std::pair<int, int> toCoords(double x, double y) override
 	{
-		/*
-		 * 1)
-		 *   change (x, y) for (rx, ry)
-		 *            -- rectangle coordinates:
-		 *
-		 *    0   1   2   3   4   5   6   7
-		 *    __ __   __ __   __ __   __ __
-		 *   \  |  /|\  |  /|\  |  /|\  |  /.
-		 * 3  \ | / | \ | / | \ | / | \ | /.
-		 *     \|/__|__\|/__|__\|/__|__\|/.
-		 *     /|\  |  /|\  |  /|\  |  /|\.
-		 * 2  / | \ | / | \ | / | \ | / | \.
-		 *   /__|__\|/__|__\|/__|__\|/__|__\.
-		 *   \     / \  |  /|\  |  /|\  |  /.
-		 * 1  \1,0/1,1\ | / | \ | / | \ | /.
-		 *     \_/_____\|/__|__\|/__|__\|/.
-		 *     / \     /|\  |  /|\  |  /|\.
-		 * 0  /0,0\0,1/ | \ | / | \ | / | \.
-		 *   /_____\_/__|__\|/__|__\|/__|__\.
-		 *
-		 *   __ 
-		 *  |  /|
-		 *  | / | -- Width * sqrt(3) / 2
-		 *  |/__|
-		 *    |
-		 * Width / 2
-		 *
-		 * 2)
-		 *   if (rx + ry) % 2 == 0:
-		 *        ($) -> __ 
-		 *              |  /|
-		 *              | / |
-		 *              |/__|
-		 *                   <- (@)
-		 *   else:
-		 *                __ <- ($)
-		 *              |\  |
-		 *              | \ |
-		 *              |__\|
-		 *        (@) ->
-		 *
-		 * 3)
-		 *   Symbols ($),(@) indicate centers of bases
-		 *   of two possible triangles. The only thing
-		 *   left is to determine on which side of the
-		 *   diagonal lays the point (x, y). It can be
-		 *   determined using cross product.
-		 *
-		 * 4)
-		 *   After computing the center of the base of
-		 *   the needed triangle and after considering
-		 *   the parity of sum (rx+ry), it is possible
-		 *   to find the coordinates of the triangle.
-		 *
-		 * Author: KK
-		 */
-
-		const double rectWidth = (double) Width / 2;
-		const double rectHeight = (Width * sqrt(3)) / 2;
-		
-		/* Move coordinates so that (0, 0) lays in the
-		 * bottom left corner of triangle (0, 0). */
 		x += rectWidth;
-		y += rectHeight / 2;
+		y += rectHeight_div_2;
 
 		std::pair<int, int> result;
 		int & rx = result.first;
@@ -236,7 +109,6 @@ private:
 		ry = std::floor(y / rectHeight);
 		rx = std::floor(x / rectWidth) - ry;
 
-		/* Magic formula */
 		if(x * rectHeight
 			+ rectWidth * (
 				rectHeight * - rx - y
@@ -245,13 +117,10 @@ private:
 		return result;
 	}
 
-	void forEachFieldInRect(double x, double y, double width, double height, std::function<void(FieldType&)> f)
+	virtual void forEachFieldInRect(double x, double y, double width, double height, std::function<void(FieldType&)> f) override
 	{
-		const double rectWidth = (double) Width / 2;
-		const double rectHeight = (Width * sqrt(3)) / 2;
-
 		x += rectWidth;
-		y += rectHeight / 2;
+		y += rectHeight_div_2;
 
 		const int rx = std::floor(x / rectWidth);
 		const int ry = std::floor(y / rectHeight);
@@ -264,22 +133,12 @@ private:
 		{
 			for(int y = ry; y <= rY; y++)
 			{
-				auto it = fields.find(
-					std::make_pair(
-						x - y,
-						y
-					)
-				);
-				if(it != fields.end())
-					f(it->second);
+				auto ptr = Parent::fieldPtr(x - y, y);
+				if(ptr)
+					f(*ptr);
 			}
 		}
 	}
-
-	std::map<
-		std::pair<int, int>,
-		FieldType
-	> fields;
 };
 
 typedef TriangleBoard<TriangleField, 100> Board;

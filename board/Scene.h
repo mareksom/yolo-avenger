@@ -6,8 +6,6 @@ template<typename Board>
 class Scene : public Gtk::DrawingArea
 {
 public:
-	typedef typename Board::FieldType FieldType;
-
 	Scene(Board & board) :
 		board(board),
 		transX(0.0), transY(0.0), zoom(1.0),
@@ -94,11 +92,13 @@ public:
 		}
 		else if(event->button == 3)
 		{
+			/*
 			board.hover_event(xFromPointer(event->x), yFromPointer(event->y));
 			auto menu = board.getGtkPopupFieldMenu();
 			if(menu != nullptr)
 				menu->popup(event->button, event->time);
 			return true;
+			*/
 		}
 		queue_draw();
 		return false;
