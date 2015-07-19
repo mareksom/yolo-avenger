@@ -5,7 +5,7 @@
 
 struct App
 {
-	typedef Triangle::Board BoardType;
+	typedef Hex::Board BoardType;
 
 	std::string title() { return "Board - Avenger"; }
 

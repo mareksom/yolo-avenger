@@ -122,8 +122,12 @@ public:
 		selectedFields.clear();
 	}
 
-	void draw(Cairo::RefPtr<Cairo::Context> context, double x, double y, double width, double height)
+	void draw(Cairo::RefPtr<Cairo::Context> context)
 	{
+		double x, y, width, height;
+		context->get_clip_extents(x, y, width, height);
+		width -= x;
+		height -= y;
 		forEachFieldInRect(
 			x, y, width, height,
 			[this, context] (FieldType & f) {

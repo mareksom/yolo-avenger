@@ -24,7 +24,7 @@ public:
 		context->save();
 			context->translate(-transX, -transY);
 			context->scale(zoom, zoom);
-			board.draw(context, xFromPointer(0), yFromPointer(0), get_width() / zoom, get_height() / zoom);
+			board.draw(context);
 			if(selectionValid)
 			{
 				context->save();
