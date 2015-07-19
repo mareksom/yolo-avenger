@@ -122,6 +122,94 @@ protected:
 			}
 		}
 	}
+
+	virtual bool isFieldInsideRect(const FieldType & field, double x, double y, double width, double height) override
+	{
+		auto cross_product = [] (double ax, double ay, double bx, double by) {
+			return ax * by - ay * bx;
+		};
+
+		auto inside_angle = [cross_product] (double Ax, double Ay, double Bx, double By, double Cx, double Cy, double x, double y) {
+			return cross_product(Cx - Ax, Cy - Ay, x - Ax, y - Ay)
+				* cross_product(Bx - Ax, By - Ay, x - Ax, y - Ay) < 0;
+		};
+
+		auto point_inside_triangle = [inside_angle] (double Ax, double Ay, double Bx, double By, double Cx, double Cy, double x, double y) {
+			return inside_angle(Ax, Ay, Bx, By, Cx, Cy, x, y)
+				and inside_angle(Bx, By, Ax, Ay, Cx, Cy, x, y);
+		};
+
+		auto point_inside_rect = [x, y, width, height] (double px, double py) {
+			return x <= px and px <= x + width and y <= py and py <= y + height;
+		};
+
+		const int dx[6] = {0, 1, 1, 0, -1, -1};
+		const int dy[6] = {-1, -1, 0, 1, 1, 0};
+
+		std::pair<double, double> points_around[6];
+		for(int i = 0; i < 6; i++)
+		{
+			const int nx = field.x() + dx[i];
+			const int ny = field.y() + dy[i];
+			points_around[i] = std::make_pair(
+				(2 * nx + ny) * rectWidth,
+				ny * rectHeight
+			);
+		}
+
+		auto point_inside_hex = [point_inside_triangle, points_around] (double x, double y) {
+			return point_inside_triangle(
+					points_around[0].first, points_around[0].second,
+					points_around[2].first, points_around[2].second,
+					points_around[4].first, points_around[4].second,
+					x, y)
+				and point_inside_triangle(
+					points_around[1].first, points_around[1].second,
+					points_around[3].first, points_around[3].second,
+					points_around[5].first, points_around[5].second,
+					x, y);
+		};
+
+		if(point_inside_hex(x, y)
+				or point_inside_hex(x + width, y)
+				or point_inside_hex(x, y + height)
+				or point_inside_hex(x + width, y + height))
+			return true;
+
+		auto segment_cross = [cross_product] (double Ax, double Ay, double Bx, double By, double Cx, double Cy, double Dx, double Dy) {
+			return cross_product(Bx - Ax, By - Ay, Cx - Ax, Cy - Ay)
+				* cross_product(Bx - Ax, By - Ay, Dx - Ax, Dy - Ay) < 0
+			and cross_product(Dx - Cx, Dy - Cy, Ax - Cx, Ay - Cy)
+				* cross_product(Dx - Cx, Dy - Cy, Bx - Cx, By - Cy) < 0;
+		};
+
+		std::pair<double, double> points_around_hex[6];
+		for(int i = 0; i < 6; i++)
+		{
+			const int j = (i + 2) % 6;
+			points_around_hex[i].first = (points_around[i].first * 2 + points_around[j].first) / 3;
+			points_around_hex[i].second = (points_around[i].second * 2 + points_around[j].second) / 3;
+			if(point_inside_rect(points_around_hex[i].first, points_around_hex[i].second))
+				return true;
+		}
+
+		auto cross_with_hex = [segment_cross, points_around_hex] (double Ax, double Ay, double Bx, double By) {
+			for(int i = 0; i < 6; i++)
+			{
+				const int j = (i + 1) % 6;
+				if(segment_cross(Ax, Ay, Bx, By,
+						points_around_hex[i].first, points_around_hex[i].second,
+						points_around_hex[j].first, points_around_hex[j].second))
+					return true;
+			}
+			return false;
+		};
+
+		return cross_with_hex(x, y, x + width, y)
+			or cross_with_hex(x, y, x, y + height)
+			or cross_with_hex(x, y + height, x + width, y + height)
+			or cross_with_hex(x + width, y, x + width, y + height);
+	}
 };
 
 typedef HexBoard<HexField, 50> Board;

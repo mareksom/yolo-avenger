@@ -137,7 +137,7 @@ public:
 	void setSelection(double x, double y, double width, double height)
 	{
 		clearSelection();
-		forEachFieldInRect(
+		forEachFieldInRectExact(
 			x, y, width, height,
 			[this] (FieldType & f) { addToSelection(&f); }
 		);
@@ -150,9 +150,20 @@ protected:
 		selectedFields.push_back(field);
 	}
 
+	void forEachFieldInRectExact(double x, double y, double width, double height, std::function<void(FieldType&)> f)
+	{
+		forEachFieldInRect(x, y, width, height,
+			[this, f, x, y, width, height] (FieldType & field) {
+				if(isFieldInsideRect(field, x, y, width, height))
+					f(field);
+			}
+		);
+	}
+
 	virtual std::pair<int, int> toCoords(double x, double y) = 0;
 	virtual void drawField(const FieldType & field, Cairo::RefPtr<Cairo::Context> context) = 0;
 	virtual void forEachFieldInRect(double x, double y, double width, double height, std::function<void(FieldType&)> f) = 0;
+	virtual bool isFieldInsideRect(const FieldType & field, double x, double y, double width, double height) = 0;
 
 private:
 	std::map<

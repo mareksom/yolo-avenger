@@ -28,7 +28,22 @@ public:
 			if(selectionValid)
 			{
 				context->save();
+					context->set_source_rgba(0, 0, 1, 0.1);
 					context->rectangle(selectionX, selectionY, selectionWidth, selectionHeight);
+					context->fill();
+				context->restore();
+				context->save();
+					context->set_source_rgba(0, 0, 1, 0.7);
+					context->set_line_width(3 / zoom);
+					context->set_dash(std::vector<double>({10. / zoom, 5. / zoom}), 0.);
+					context->move_to(selectionX, selectionY);
+					context->line_to(selectionX, selectionY + selectionHeight);
+					context->move_to(selectionX, selectionY);
+					context->line_to(selectionX + selectionWidth, selectionY);
+					context->move_to(selectionX, selectionY + selectionHeight);
+					context->line_to(selectionX + selectionWidth, selectionY + selectionHeight);
+					context->move_to(selectionX + selectionWidth, selectionY);
+					context->line_to(selectionX + selectionWidth, selectionY + selectionHeight);
 					context->stroke();
 				context->restore();
 			}
@@ -116,7 +131,7 @@ public:
 		{
 			selectionWidth = x - selectionX;
 			selectionHeight = y - selectionY;
-			selectionValid = abs(selectionWidth) > 10 and abs(selectionHeight) > 10;
+			selectionValid = true;
 			if(selectionValid)
 			{
 				double x = std::min(selectionX, selectionX + selectionWidth);

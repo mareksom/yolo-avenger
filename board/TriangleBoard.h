@@ -139,6 +139,61 @@ private:
 			}
 		}
 	}
+
+	virtual bool isFieldInsideRect(const FieldType & field, double x, double y, double width, double height) override
+	{
+		const int r = field.upsideDown() ? -1 : 1;
+
+		const double centerX = (field.x() + field.y()) * rectWidth;
+		const double centerY = field.y() * rectHeight + r * rectHeight_div_2;
+
+		const double leftX = centerX - rectWidth;
+		const double rightX = centerX + rectWidth;
+		const double sideY = centerY - r * rectHeight;
+
+		/* Check if center vertex lies inside the rectangle */
+		if(x <= centerX and centerX <= x + width and y <= centerY and centerY <= y + height)
+			return true;
+
+		auto cross_product = [] (double ax, double ay, double bx, double by) {
+			return ax * by - ay * bx;
+		};
+
+		auto is_inside_triangle = [this, cross_product, r, leftX, rightX, sideY] (double x, double y) {
+			return cross_product(2 * rectWidth, 0, x - leftX, y - sideY) * r > 0
+				and cross_product(x - leftX, y - sideY, rectWidth, rectHeight * r) * r > 0
+				and cross_product(-2 * rectWidth, 0, x - rightX, y - sideY) * r < 0
+				and cross_product(x - rightX, y - sideY, -rectWidth, rectHeight * r) * r < 0;
+		};
+
+		if(is_inside_triangle(x, y) or is_inside_triangle(x + width, y + height))
+			return true;
+
+		auto segment_cross = [cross_product] (double Ax, double Ay, double Bx, double By, double Cx, double Cy, double Dx, double Dy) {
+			return cross_product(Bx - Ax, By - Ay, Cx - Ax, Cy - Ay)
+					* cross_product(Bx - Ax, By - Ay, Dx - Ax, Dy - Ay) < 0
+				and cross_product(Dx - Cx, Dy - Cy, Ax - Cx, Ay - Cy)
+					* cross_product(Dx - Cx, Dy - Cy, Bx - Cx, By - Cy) < 0;
+		};
+
+		auto left_side_cross = [segment_cross, leftX, sideY, centerX, centerY] (double ax, double ay, double bx, double by) {
+			return segment_cross(leftX, sideY, centerX, centerY, ax, ay, bx, by);
+		};
+
+		auto right_side_cross = [segment_cross, rightX, sideY, centerX, centerY] (double ax, double ay, double bx, double by) {
+			return segment_cross(rightX, sideY, centerX, centerY, ax, ay, bx, by);
+		};
+
+		auto or_all_rect_sides = [x, y, width, height] (std::function<bool(double, double, double, double)> f) {
+			return f(x, y, x + width, y)
+				or f(x, y, x, y + height)
+				or f(x, y + height, x + width, y + height)
+				or f(x + width, y, x + width, y + height);
+		};
+
+		return or_all_rect_sides(left_side_cross)
+			or or_all_rect_sides(right_side_cross);
+	}
 };
 
 typedef TriangleBoard<TriangleField, 100> Board;
