@@ -31,9 +31,9 @@ public:
 };
 
 template<typename FieldType, int Width>
-class HexBoard : public Board::Board<FieldType>
+class HexBoard : public Board::Board<FieldType, HexBoard<FieldType, Width> >
 {
-	typedef typename Board::Board<FieldType> Parent;
+	typedef typename Board::Board<FieldType, HexBoard<FieldType, Width> > Parent;
 
 	static constexpr double sin_pi_div_6 = 0.5;
 	static constexpr double negative_sin_pi_div_6 = -sin_pi_div_6;
@@ -209,6 +209,16 @@ protected:
 			or cross_with_hex(x, y, x, y + height)
 			or cross_with_hex(x, y + height, x + width, y + height)
 			or cross_with_hex(x + width, y, x + width, y + height);
+	}
+
+	virtual void invalidateField(const FieldType & field) override
+	{
+		Parent::invalidateArea(
+			(2 * field.x() + field.y()) * rectWidth - Width,
+			field.y() * rectHeight - Width - 10,
+			2 * Width,
+			2 * Width + 20
+		);
 	}
 };
 

@@ -34,9 +34,9 @@ public:
 };
 
 template<typename FieldType, int Width>
-class TriangleBoard : public Board::Board<FieldType>
+class TriangleBoard : public Board::Board<FieldType, TriangleBoard<FieldType, Width> >
 {
-	typedef typename Board::Board<FieldType> Parent;
+	typedef typename Board::Board<FieldType, TriangleBoard<FieldType, Width> > Parent;
 
 	static constexpr double sqrt_3 = 1.7320508075688772;
 	static constexpr double sqrt_3_div_2 = sqrt_3 / 2;
@@ -193,6 +193,16 @@ private:
 
 		return or_all_rect_sides(left_side_cross)
 			or or_all_rect_sides(right_side_cross);
+	}
+
+	virtual void invalidateField(const FieldType & field) override
+	{
+		Parent::invalidateArea(
+			(double) ((field.x() + field.y() - 1) * Width) / 2 - 10,
+			(field.y() - 0.5) * Width * sqrt_3_div_2 - 10,
+			Width + 20,
+			rectHeight + 20
+		);
 	}
 };
 

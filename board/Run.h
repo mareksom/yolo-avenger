@@ -24,8 +24,8 @@ void Run()
 	Gtk::Window window;
 
 	Board board;
-
 	Scene<Board> scene(board);
+	board.setScene(&scene);
 
 	window.add(scene);
 	scene.show();

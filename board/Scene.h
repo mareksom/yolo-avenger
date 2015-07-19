@@ -19,6 +19,17 @@ public:
 
 	virtual ~Scene() { }
 
+	void invalidate() { queue_draw(); }
+
+	void invalidateArea(double x, double y, double width, double height)
+	{
+		int nX = std::floor(xToPointer(x));
+		int nY = std::floor(yToPointer(y));
+		int nWidth = std::ceil(xToPointer(x + width)) - nX;
+		int nHeight = std::ceil(yToPointer(y + height)) - nY;
+		queue_draw_area(nX, nY, nWidth, nHeight);
+	}
+
 	bool on_draw(const Cairo::RefPtr<Cairo::Context> & context) override
 	{
 		context->save();
@@ -48,6 +59,17 @@ public:
 				context->restore();
 			}
 		context->restore();
+		/*
+		context->save();
+			double x, y, width, height;
+			context->get_clip_extents(x, y, width, height);
+			width -= x; height -= y;
+			context->set_source_rgba(0, 1, 0, 0.5);
+			context->set_line_width(10);
+			context->rectangle(x, y, width, height);
+			context->stroke();
+		context->restore();
+		*/
 		return true;
 	}
 
@@ -55,7 +77,6 @@ public:
 	{
 		updateSelection(xFromPointer(event->x), yFromPointer(event->y));
 		board.hover_event(xFromPointer(event->x), yFromPointer(event->y));
-		queue_draw();
 		return true;
 	}
 
@@ -91,12 +112,13 @@ public:
 			board.hover_event(xFromPointer(event->x), yFromPointer(event->y));
 		}
 		updateSelection(xFromPointer(event->x), yFromPointer(event->y));
-		queue_draw();
+		invalidate();
 		return true;
 	}
 
 	virtual bool on_button_press_event(GdkEventButton * event) override
 	{
+		invalidateSelection();
 		selectionStarted = selectionValid = false;
 		if(event->button == 1)
 		{
@@ -105,17 +127,6 @@ public:
 			selectionY = yFromPointer(event->y);
 			updateSelection(selectionX, selectionY);
 		}
-		else if(event->button == 3)
-		{
-			/*
-			board.hover_event(xFromPointer(event->x), yFromPointer(event->y));
-			auto menu = board.getGtkPopupFieldMenu();
-			if(menu != nullptr)
-				menu->popup(event->button, event->time);
-			return true;
-			*/
-		}
-		queue_draw();
 		return false;
 	}
 
@@ -125,20 +136,36 @@ public:
 		return false;
 	}
 
+	void invalidateSelection()
+	{
+		if(selectionValid)
+		{
+			const double x = std::min(selectionX, selectionX + selectionWidth);
+			const double y = std::min(selectionY, selectionY + selectionHeight);
+			const double width = std::max(selectionX, selectionX + selectionWidth) - x;
+			const double height = std::max(selectionY, selectionY + selectionHeight) - y;
+			invalidateArea(x - 10, y - 10, width + 20, height + 20);
+		}
+	}
+
 	void updateSelection(double x, double y)
 	{
 		if(selectionStarted)
 		{
+			invalidateSelection();
+			selectionValid = true;
+
 			selectionWidth = x - selectionX;
 			selectionHeight = y - selectionY;
-			selectionValid = true;
+
 			if(selectionValid)
 			{
-				double x = std::min(selectionX, selectionX + selectionWidth);
-				double y = std::min(selectionY, selectionY + selectionHeight);
-				double width = std::max(selectionX, selectionX + selectionWidth) - x;
-				double height = std::max(selectionY, selectionY + selectionHeight) - y;
+				const double x = std::min(selectionX, selectionX + selectionWidth);
+				const double y = std::min(selectionY, selectionY + selectionHeight);
+				const double width = std::max(selectionX, selectionX + selectionWidth) - x;
+				const double height = std::max(selectionY, selectionY + selectionHeight) - y;
 				board.setSelection(x, y, width, height);
+				invalidateSelection();
 			}
 			else
 				board.clearSelection();
@@ -148,6 +175,8 @@ public:
 private:
 	double xFromPointer(double x) { return (x + transX) / zoom; }
 	double yFromPointer(double y) { return (y + transY) / zoom; }
+	double xToPointer(double x) { return x * zoom - transX; }
+	double yToPointer(double y) { return y * zoom - transY; }
 
 	Board & board;
 

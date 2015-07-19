@@ -71,12 +71,17 @@ private:
 	bool m_selected;
 };
 
-template<typename FieldType>
+template<typename FieldType, typename BoardType>
 class Board
 {
 public:
-	Board() : m_fieldHovered(nullptr)
+	Board() : m_fieldHovered(nullptr), scene(nullptr)
 	{
+	}
+
+	void setScene(Scene<BoardType> * scene)
+	{
+		this->scene = scene;
 	}
 
 	FieldType & operator () (int x, int y)
@@ -112,13 +117,24 @@ public:
 		hoverField(getAtPtr(x, y));
 	}
 
-	void hoverField(FieldType * field) { m_fieldHovered = field; }
+	void hoverField(FieldType * field)
+	{
+		std::swap(field, m_fieldHovered);
+		if(field)
+			invalidateField(*field);
+		if(m_fieldHovered)
+			invalidateField(*m_fieldHovered);
+	}
+
 	FieldType * fieldHovered() { return m_fieldHovered; }
 
 	void clearSelection()
 	{
 		for(auto f : selectedFields)
+		{
 			f->deselect();
+			invalidateField(*f);
+		}
 		selectedFields.clear();
 	}
 
@@ -143,7 +159,10 @@ public:
 		clearSelection();
 		forEachFieldInRectExact(
 			x, y, width, height,
-			[this] (FieldType & f) { addToSelection(&f); }
+			[this] (FieldType & f) {
+				addToSelection(&f);
+				invalidateField(f);
+			}
 		);
 	}
 
@@ -164,12 +183,18 @@ protected:
 		);
 	}
 
+	void invalidate() { scene->invalidate(); }
+	void invalidateArea(double x, double y, double width, double height) { scene->invalidateArea(x, y, width, height); }
+
 	virtual std::pair<int, int> toCoords(double x, double y) = 0;
 	virtual void drawField(const FieldType & field, Cairo::RefPtr<Cairo::Context> context) = 0;
 	virtual void forEachFieldInRect(double x, double y, double width, double height, std::function<void(FieldType&)> f) = 0;
 	virtual bool isFieldInsideRect(const FieldType & field, double x, double y, double width, double height) = 0;
+	virtual void invalidateField(const FieldType & field) = 0;
 
 private:
+	Scene<BoardType> * scene;
+
 	std::map<
 		std::pair<int, int>,
 		FieldType
