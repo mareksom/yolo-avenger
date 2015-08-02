@@ -5,6 +5,8 @@
 template<typename Board>
 class Scene : public Gtk::DrawingArea
 {
+	static constexpr double selectionBorderWidth = 3.0;
+
 public:
 	Scene(Board & board) :
 		board(board),
@@ -45,7 +47,7 @@ public:
 				context->restore();
 				context->save();
 					context->set_source_rgba(0, 0, 1, 0.7);
-					context->set_line_width(3 / zoom);
+					context->set_line_width(selectionBorderWidth / zoom);
 					context->set_dash(std::vector<double>({10. / zoom, 5. / zoom}), 0.);
 					context->move_to(selectionX, selectionY);
 					context->line_to(selectionX, selectionY + selectionHeight);
@@ -125,6 +127,8 @@ public:
 			selectionStarted = true;
 			selectionX = xFromPointer(event->x);
 			selectionY = yFromPointer(event->y);
+			selectionWidth = selectionHeight = 0;
+			board.clearSelection();
 			updateSelection(selectionX, selectionY);
 		}
 		return false;
@@ -144,7 +148,7 @@ public:
 			const double y = std::min(selectionY, selectionY + selectionHeight);
 			const double width = std::max(selectionX, selectionX + selectionWidth) - x;
 			const double height = std::max(selectionY, selectionY + selectionHeight) - y;
-			invalidateArea(x - 10, y - 10, width + 20, height + 20);
+			invalidateArea(x - selectionBorderWidth / zoom, y - selectionBorderWidth / zoom, width + selectionBorderWidth * 2 / zoom, height + selectionBorderWidth * 2 / zoom);
 		}
 	}
 
@@ -152,23 +156,104 @@ public:
 	{
 		if(selectionStarted)
 		{
-			invalidateSelection();
+			const double oldWidth = selectionWidth;
+			const double oldHeight = selectionHeight;
+
 			selectionValid = true;
 
 			selectionWidth = x - selectionX;
 			selectionHeight = y - selectionY;
 
-			if(selectionValid)
+			auto runWithConvertedRectCoords = [] (std::function<void(double, double, double, double)> f, double x, double y, double width, double height) {
+				if(width <= 0) { x += width; width *= -1; }
+				if(height <= 0) { y += height; height *= -1; }
+				f(x, y, width, height);
+			};
+
+			auto runSetSelection = [&runWithConvertedRectCoords, this] (double x, double y, double width, double height) {
+				runWithConvertedRectCoords(
+					[this] (double x, double y, double width, double height) {
+						board.setSelection(x, y, width, height);
+						invalidateArea(x - selectionBorderWidth / zoom, y - selectionBorderWidth / zoom, width + selectionBorderWidth * 2 / zoom, height + selectionBorderWidth * 2 / zoom);
+					},
+					x, y, width, height
+				);
+			};
+
+			auto runAddSelection = [&runWithConvertedRectCoords, this] (double x, double y, double width, double height) {
+				runWithConvertedRectCoords(
+					[this] (double x, double y, double width, double height) {
+						board.addSelection(x, y, width, height);
+						invalidateArea(x - selectionBorderWidth / zoom, y - selectionBorderWidth / zoom, width + selectionBorderWidth * 2 / zoom, height + selectionBorderWidth * 2 / zoom);
+					},
+					x, y, width, height
+				);
+			};
+
+			auto runRemoveSelection = [&runWithConvertedRectCoords, this] (double x, double y, double width, double height) {
+				runWithConvertedRectCoords(
+					[this] (double x, double y, double width, double height) {
+						board.removeSelection(x, y, width, height);
+						invalidateArea(x - selectionBorderWidth / zoom, y - selectionBorderWidth / zoom, width + selectionBorderWidth * 2 / zoom, height + selectionBorderWidth * 2 / zoom);
+					},
+					x, y, width, height
+				);
+			};
+
+			auto runInvalidateArea = [&runWithConvertedRectCoords, this] (double x, double y, double width, double height) {
+				runWithConvertedRectCoords(
+					[this] (double x, double y, double width, double height) {
+						invalidateArea(x - selectionBorderWidth / zoom, y - selectionBorderWidth / zoom, width + selectionBorderWidth * 2 / zoom, height + selectionBorderWidth * 2 / zoom);
+					},
+					x, y, width, height
+				);
+			};
+
+			const int xSignum = oldWidth < 0 ? -1 : 1;
+			const int ySignum = oldHeight < 0 ? -1 : 1;
+
+			/* xPos: |         |
+			 *       +=========+
+			 *       |         |
+			 *  -1   |    0    |  +1
+			 *       |         |
+			 *       +=========+
+			 *       |         |       */
+
+			const int xPos = (selectionWidth * xSignum > oldWidth * xSignum) ?
+				1 : ((selectionWidth * xSignum >= 0) ? 0 : -1);
+			const int yPos = (selectionHeight * ySignum > oldHeight * ySignum) ?
+				1 : ((selectionHeight * ySignum >= 0) ? 0 : -1);
+
+			if(xPos == 1 and yPos == 1)
 			{
-				const double x = std::min(selectionX, selectionX + selectionWidth);
-				const double y = std::min(selectionY, selectionY + selectionHeight);
-				const double width = std::max(selectionX, selectionX + selectionWidth) - x;
-				const double height = std::max(selectionY, selectionY + selectionHeight) - y;
-				board.setSelection(x, y, width, height);
-				invalidateSelection();
+				runAddSelection(selectionX + oldWidth, selectionY, selectionWidth - oldWidth, oldHeight);
+				runAddSelection(selectionX, selectionY + oldHeight, selectionWidth, selectionHeight - oldHeight);
+			}
+			else if(xPos == 0 and yPos == 0)
+			{
+				runRemoveSelection(selectionX + selectionWidth, selectionY, oldWidth - selectionWidth, selectionHeight);
+				runRemoveSelection(selectionX, selectionY + selectionHeight, oldWidth, oldHeight - selectionHeight);
+				runAddSelection(selectionX + selectionWidth, selectionY, 0, selectionHeight);
+				runAddSelection(selectionX, selectionY + selectionHeight, selectionWidth, 0);
+			}
+			else if(xPos == 1 and yPos == 0)
+			{
+				runRemoveSelection(selectionX, selectionY + selectionHeight, oldWidth, oldHeight - selectionHeight);
+				runAddSelection(selectionX, selectionY + selectionHeight, oldWidth, 0);
+				runAddSelection(selectionX + oldWidth, selectionY, selectionWidth - oldWidth, selectionHeight);
+			}
+			else if(xPos == 0 and yPos == 1)
+			{
+				runRemoveSelection(selectionX + selectionWidth, selectionY, oldWidth - selectionWidth, oldHeight);
+				runAddSelection(selectionX + selectionWidth, selectionY, 0, oldHeight);
+				runAddSelection(selectionX, selectionY + oldHeight, selectionWidth, selectionHeight - oldHeight);
 			}
 			else
-				board.clearSelection();
+			{
+				runInvalidateArea(selectionX, selectionY, oldWidth, oldHeight);
+				runSetSelection(selectionX, selectionY, selectionWidth, selectionHeight);
+			}
 		}
 	}
 

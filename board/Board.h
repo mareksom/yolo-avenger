@@ -154,9 +154,8 @@ public:
 			drawField(*m_fieldHovered, context);
 	}
 
-	void setSelection(double x, double y, double width, double height)
+	void addSelection(double x, double y, double width, double height)
 	{
-		clearSelection();
 		forEachFieldInRectExact(
 			x, y, width, height,
 			[this] (FieldType & f) {
@@ -166,11 +165,34 @@ public:
 		);
 	}
 
+	void removeSelection(double x, double y, double width, double height)
+	{
+		forEachFieldInRectExact(
+			x, y, width, height,
+			[this] (FieldType & f) {
+				removeFromSelection(&f);
+				invalidateField(f);
+			}
+		);
+	}
+
+	void setSelection(double x, double y, double width, double height)
+	{
+		clearSelection();
+		addSelection(x, y, width, height);
+	}
+
 protected:
 	void addToSelection(FieldType * field)
 	{
 		field->select();
-		selectedFields.push_back(field);
+		selectedFields.insert(field);
+	}
+
+	void removeFromSelection(FieldType * field)
+	{
+		field->deselect();
+		selectedFields.erase(field);
 	}
 
 	void forEachFieldInRectExact(double x, double y, double width, double height, std::function<void(FieldType&)> f)
@@ -183,6 +205,16 @@ protected:
 		);
 	}
 
+	void forEachFieldEntirelyInRect(double x, double y, double width, double height, std::function<void(FieldType&)> f)
+	{
+		forEachFieldInRect(x, y, width, height,
+			[this, f, x, y, width, height] (FieldType & field) {
+				if(isFieldEntirelyInsideRect(field, x, y, width, height))
+					f(field);
+			}
+		);
+	}
+
 	void invalidate() { scene->invalidate(); }
 	void invalidateArea(double x, double y, double width, double height) { scene->invalidateArea(x, y, width, height); }
 
@@ -190,6 +222,7 @@ protected:
 	virtual void drawField(const FieldType & field, Cairo::RefPtr<Cairo::Context> context) = 0;
 	virtual void forEachFieldInRect(double x, double y, double width, double height, std::function<void(FieldType&)> f) = 0;
 	virtual bool isFieldInsideRect(const FieldType & field, double x, double y, double width, double height) = 0;
+	virtual bool isFieldEntirelyInsideRect(const FieldType & field, double x, double y, double width, double height) = 0;
 	virtual void invalidateField(const FieldType & field) = 0;
 
 private:
@@ -201,7 +234,7 @@ private:
 	> fields;
 
 	FieldType * m_fieldHovered;
-	std::vector<FieldType*> selectedFields;
+	std::unordered_set<FieldType*> selectedFields;
 };
 
 } // namespace Board

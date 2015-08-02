@@ -195,6 +195,15 @@ private:
 			or or_all_rect_sides(right_side_cross);
 	}
 
+	virtual bool isFieldEntirelyInsideRect(const FieldType & field, double x, double y, double width, double height) override
+	{
+		const double left = (field.x() + field.y() - 1) * rectWidth;
+		const double right = (field.x() + field.y() + 1) * rectWidth;
+		const double top = (field.y() + 0.5) * rectHeight;
+		const double bottom = (field.y() - 0.5) * rectHeight;
+		return x <= left and right <= x + width and y <= bottom and top <= y + height;
+	}
+
 	virtual void invalidateField(const FieldType & field) override
 	{
 		Parent::invalidateArea(

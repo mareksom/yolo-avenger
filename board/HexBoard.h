@@ -211,6 +211,15 @@ protected:
 			or cross_with_hex(x + width, y, x + width, y + height);
 	}
 
+	virtual bool isFieldEntirelyInsideRect(const FieldType & field, double x, double y, double width, double height) override
+	{
+		const double left = (2 * field.x() + field.y() - 1) * rectWidth;
+		const double right = (2 * field.x() + field.y() + 1) * rectWidth;
+		const double top = field.y() * rectHeight + Width;
+		const double bottom = field.y() * rectHeight - Width;
+		return x <= left and right <= x + width and y <= bottom and top <= y + height;
+	}
+
 	virtual void invalidateField(const FieldType & field) override
 	{
 		Parent::invalidateArea(
