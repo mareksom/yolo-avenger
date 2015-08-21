@@ -1,5 +1,5 @@
 BUILD = build
-CPP = clang++
+CPP = g++
 CPPFLAGS = -pthread -std=c++11 -g `pkg-config gtkmm-3.0 --cflags`
 LDFLAGS = `pkg-config gtkmm-3.0 --cflags --libs`
 OBJS = main.o

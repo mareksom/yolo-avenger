@@ -1,0 +1,17 @@
+Ficzery dla grafu:
+Reprezentacja,
+Zaznaczanie wierzcholka, krawedzi
+Masowe zaznaczanie wierzcholka, krawedzi
+Dodawanie, usuwanie wierzcholkow, krawedzi
+Ukorzenienie, warstwowanie
+
+Co z multikrawedziami?
+Co z wagami krawedzi, wierzcholkow?
+
+Umieszczanie wierzcholkow w sztywnych pozycjach: prostokaty, proste
+
+Podstawowe algorytmy?
+Zaznaczanie mostow i punktow artykulacji, najkrotsza sciezka miedzy para punktow.
+
+Wyjatkowe grafy:
+Drzewa, kilki, dwudzielne, cos specjalnie dla nich?
