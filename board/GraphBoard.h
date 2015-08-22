@@ -4,33 +4,31 @@
 
 #include <bits/stdc++.h>
 
-namespace Triangle {
+namespace Graph {
 
-class TriangleField : public Board::Field
+class Vertex : public Board::Field
 {
 public:
-	TriangleField(int x, int y) : Board::Field(x, y)
+	Vertex(int x, int y) : Board::Field(x, y)
 	{
 	}
-
-	bool upsideDown() const { return x() % 2 != 0; }
 
 	void draw(Cairo::RefPtr<Cairo::Context> context) const
 	{
 		Field::draw(context);
 
-		auto s = coordinatesString();
+		auto s = to_string(number);
 
 		context->save();
 			Cairo::TextExtents te;
 			context->set_source_rgb(0, 0, 0);
 			context->set_font_size(0.15);
 			context->get_scaled_font()->text_extents(s, te);
-			double adjustHeight = (upsideDown() ? 1 : -1) * sqrt(3) / 12;
-			context->move_to(-te.width / 2, te.height / 2 + adjustHeight);
 			context->show_text(s);
 		context->restore();
 	}
+  
+  
 };
 
 template<typename FieldType, int Width>
