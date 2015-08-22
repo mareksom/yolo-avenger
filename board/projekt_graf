@@ -1,17 +1,118 @@
 Ficzery dla grafu:
-Reprezentacja,
-Zaznaczanie wierzcholka, krawedzi
-Masowe zaznaczanie wierzcholka, krawedzi
-Dodawanie, usuwanie wierzcholkow, krawedzi
-Ukorzenienie, warstwowanie
+* automatyczne rozmieszczenie:
+  - od korzenia w dół (dla drzew)
+  - warstwowanie od źródła poprzez warstwy BFSa (najlepsze chyba dla grafów
+    warstwowych jak w sieciach neuronowych)
+  - rozmieszczenie wierzchołków na okręgu w równych odstępach w taki sposób,
+    żeby zminimalizować liczbę przecięć
+  - sprężyny, albo podobna fizyka (to może być coś co będzie puszczane
+    po jakiś wcześniejszych wstępnych, heurystycznych ustawieniach,
+    żeby było w ogóle idealnie; jest to też chyba najlepsze wyjście
+    dla grafów bez żadnych znanych własności...)
+* grafy do wyifowania (raczej istnieje dobry sposób narysowania,
+  bez super skomplikowanych algorytmów, albo po prostu można wygenerować
+  "dobry początek" dla algorytmu sprężynowego):
+  - drzewa (lasy)
+    > ukorzenienie drzewa
+    > rozmieszczenie średnicy drzewa na poziomej prostej, a poddrzewa
+      wyrastają z prostej jak ukorzenione drzewa
+      + wyrastają z jednej ze stron (z góry/z dołu)
+      + wyrastają z obu stron, żeby było mniej "kolizji"
+    > umieszczenie centroidu (środka średnicy?) po środku ekranu 
+      i żeby reszta jakoś ładnie od tego odchodziła (chodzi o to, żeby
+      drzewo równomiernie zajmowało obszar ekranu i dzięki temu
+      ładnie wyglądało)
+  - meduzy (lasy meduz)
+    > możliwe, że wiele metod można zapożyczyć od drzew
+  - kaktusy (lasy kaktusów)
+    > możliwe, że wiele metod można zapożyczyć od drzew
+  - grafy planarne
+    > są algorytmy na ich rozmieszczenie, trzeba się nauczyć
+    > jeśli graf jest planarny, ale jest drzewem/meduzą/jest dwudzielny itd.
+      to raczej warto zastosować tamtejsze algorytmy
+  - grafy dwudzielne
+    > warto by było dostać hinty od użytkownika,
+      bo jak graf nie jest spójny, to można rozdzielić na więcej niż jeden sposób)
+    > sposób permutowania wierzchołków, żeby było jak najmniej przecięć
+      może się przydać w innych podpunktach (np. przy układaniu wierzchołków
+      wartstwowo)
+  - DAGi
+    > sortowanie topologiczne jest dobrym startem
+    > można sprawdzić planarność i zastosować się do tych dwóch cech
+    > raczej powinno się zachować posortowanie topologiczne,
+      nawet gdyby powodowało to dodatkowe przecinanie się krawędzi,
+      albo inne drobne niedogodności
+  - kliki
+    > rozmieszczenie wierzchołków na okręgu
+* polimorfizm (lista klas, które powinno dać się rozszerzyć
+  o jakąś funkcjonalność):
+  - wierzchołki (np. dodanie wagi, typu wierzchołka -- źródło/ujście)
+  - krawędzie (np. dodanie wagi/przepustowości, skierowanie lub nie,
+    licznik multikrawędzi)
+  - grafy (aby można było prosto rozważać szczególne przypadki wypisane powyżej,
+    a w przyszłości rozważać jeszcze inne przypadki grafów)
+* ingerencja użytkownika:
+  - zaznaczanie wierzchołków/krawędzi
+  - masowe zaznaczanie wierzchołków/krawędzi
+  - dodawanie/usuwanie wierzchołków/krawędzi
+  - przesuwanie wierzchołków
+  - zmiana atrybutów wierzchołków/krawędzi/grafu/algorytmu (patrz polimorfizm)
+  - ustalenie pozycji wierzchołka przed puszczeniem auto-rozmieszczenia
+  - ustalenie pozycji wierzchołka i zamrożenie go, żeby auto-rozmieszczenie
+    go nie przesuwało
+  - przypisanie wierzchołka do prostej, żeby auto-rozmieszczenie mogło
+    przesuwać wierzchołek tylko po tej prostej
+  - przypisanie wierzchołka do prostokąta, żeby auto-rozmieszczenie mogło
+    przesuwać wierzchołek tylko wewnątrz tego prostokąta
+* algorytmy na grafie
+  - szukanie mostów, punktów artykulacji (kolorowanie dwuspójnych składowych?)
+  - najkrótsza ścieżka pomiędzy parą punktów (+dag najkrótszych ścieżek?)
+  - średnica drzewa
+  - skojarzenie i narysowanie skojarzenia tak, żeby krawędzie skojarzone
+    nie miały prawa się przecinać
+    > w grafie dwudzielnym
+    > w ogólnym grafie
+* determinizm -- żeby graf 50-wierzchołkowy przy każdym uruchomieniu wyglądał
+  tak samo, a nie żeby za każdym razem był inaczej losowo porozmieszczany,
+  bo trzeba będzie na nowo ogarniać strukturę tego grafu, co mogłoby być
+  męczące dla użytkownika;
+* eksport/import grafu
+  - własny format pliku, opisujący dowolny graf (zapamiętujący jego wszystkie
+    istotne własności, atrybuty wierzchołków/krawędzi, itp.)
+  - zapis w znanym formacie
+    > do pliku tekstowego
+      + jako macierz sąsiedztwa
+      + jako lista sąsiedztwa
+      + jako lista krawędzi
+    > jako obrazek (jpg/png/pdf) -- Cairomm prosto pozwala na takie cuda
+    > jako SVG
+    > jako kod TikZa
+    > jako ascii art
+* zastanowić się:
+  - jak użytkownik będzie używał tego czegoś:
+    > wszystkie operacjie na grafie udostępnić tylko przez GUI, to co będzie
+      się dało robić z grafami, będzie musiało być napisane w bibliotece,
+      użytkownik tylko będzie mógł wybierać spośród różnych opcji
+      oferowanych przez bibliotekę
+      + mała swoboda dla użytkownika
+      + gorsze rysowanie, bo użytkownik będzie miał mało możliwości
+        podpowiadania jakie rozmieszczenie będzie najlepsze
+      + prostszy interfejs użytkownika -- użytkownik nawet trochę
+        nie będzie musiał rozumieć jak działa biblioteka ani domyślać się
+        formatu wejścia wyjścia
+    > użytkownik będzie pisał kod tworzący graf i będzie używał funkcji
+      z biblioteki do rozmieszczania grafu, wyświetalania grafu, itp.
+      + użytkownik będzie mógł podać:
+        ~ własny format wejścia/wyjścia
+        ~ własne atrybuty wierzchołków/krawędzi/grafu
+        ~ własne rozmieszczenie wierzchołków (być może lepsze niż automatyczne)
+      + mniejszy i szybszy kod, bo wyspecjalizowany tylko do tego,
+        co użytkownik potrzebuje (po co użytkownikowi algorytm na skojarzenie
+        w grafie dowolnym, skoro będzie chciał rysować sieć przepływową?)
+  - co z tych wszystkich podpunktów warto zrobić przede wszystkim,
+    co tylko wtedy jak starczy czasu, a co jak się komuś bardzo nudzi
+  - które z ficzerów wywalić, bo mogą one wymagać zmiany całej koncepcji
+    kodu, co mogłoby wszystko niepotrzebnie utrudnić
 
-Co z multikrawedziami?
-Co z wagami krawedzi, wierzcholkow?
-
-Umieszczanie wierzcholkow w sztywnych pozycjach: prostokaty, proste
-
-Podstawowe algorytmy?
-Zaznaczanie mostow i punktow artykulacji, najkrotsza sciezka miedzy para punktow.
-
-Wyjatkowe grafy:
-Drzewa, kilki, dwudzielne, cos specjalnie dla nich?
+Coś co wygląda jakby warto było to przeczytać:
+http://graphdrawing.org/literature/gd-constraints.pdf
