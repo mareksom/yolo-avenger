@@ -1,4 +1,5 @@
 #pragma once
+/* Funkcja do uruchomienia planszy. */
 
 #include <gtkmm-3.0/gtkmm.h>
 
@@ -6,6 +7,18 @@
 
 #include "Scene.h"
 
+/* Controller -- klasa będąca pośrednikiem między planszą, a kodem użytkownika.
+ * Musi zawierać:
+ *   typ o nazwie BoardType -- typ planszy
+ *   funkcję std::string title(); -- tytuł do wyświetlenia na pasku okna.
+ *   funkcję void init(BoardType & board); -- inicjalizację planszy przed wyświetleniem jej
+ *   funkcję void main(); -- kod, który zostanie wykonany po pokazaniu planszy
+ *
+ * W przyszłości tu będą dodawane metody, dzięki którym użytkownik będzie mógł kontrolować planszę.
+ *
+ * Funkcja Run() przejmuje kontrolę nad programem i nie wraca aż do momentu zamknięcia okna.
+ * Aby móc wykonać swój kod w trakcie wykonywania planszy, należy umieścić go w metodzie main() kontrolera.
+ */
 template<typename Controller>
 void Run()
 {

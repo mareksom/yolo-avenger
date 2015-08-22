@@ -6,6 +6,8 @@
 
 namespace Hex {
 
+/* Pole hexowe.
+ * Myśli, że promień okręgu opisanego na tym hexie jest równy 1. */
 class HexField : public Board::Field
 {
 public:
@@ -13,6 +15,8 @@ public:
 	{
 	}
 
+	/* Funkcja jest wyspecjalizowana dla tego pola tylko po to,
+	 * żeby w dobrym miejscu umieścić napis ze współrzędnymi. */
 	void draw(Cairo::RefPtr<Cairo::Context> context) const
 	{
 		Field::draw(context);
@@ -30,11 +34,21 @@ public:
 	}
 };
 
+/* Plansza hexów
+ *     _,-'-,_
+ *  ,-'       '-,
+ *  | Width->_,'|    Width to promień okręgu opisanego na hexie.
+ *  |     ,-'   |
+ *  |           |
+ *  '-,_     _,-'
+ *      '-,-'
+ */
 template<typename FieldType, int Width>
 class HexBoard : public Board::Board<FieldType, HexBoard<FieldType, Width> >
 {
 	typedef typename Board::Board<FieldType, HexBoard<FieldType, Width> > Parent;
 
+	/* Stałe potrzebne w obliczeniach, wpisane tutaj dla optymalizacji (żeby nie liczyć wielokrotnie sin(pi) itp. */
 	static constexpr double sin_pi_div_6 = 0.5;
 	static constexpr double negative_sin_pi_div_6 = -sin_pi_div_6;
 	static constexpr double sin_pi_div_3 = 0.8660254037844386;
@@ -42,12 +56,33 @@ class HexBoard : public Board::Board<FieldType, HexBoard<FieldType, Width> >
 	static constexpr double cos_pi_div_6 = sin_pi_div_3;
 	static constexpr double negative_cos_pi_div_6 = -cos_pi_div_6;
 
+	/* Planszę hexową można podzielić na planszę prostokątną:
+	 *        _,-+-,_     _,-+-,_     _,-+-,_     _,-+-,
+	 *     ,-'   |   '-,-'   |   '-,-'   |   '-,-'   |   '-,
+	 *     |     |     |     |     |     |     |     |     |
+	 *     |-----+-----+-----+-----+-----+-----+-----+-----|   -,
+	 *     |     |     |     |     |     |     |     |     |    |
+	 *     '-,_  |  _,-+-,_  |  _,-+-,_  |  _,-+-,_  |  _,-'     > rectHeight
+	 *         '-+-'   |   '-+-'   |   '-+-'   |   '-+-'        |
+	 *           |     |     |     |     |     |     |          |
+	 *           |-----+-----+-----+-----+-----+-----|         -'
+	 *           |     |     |     |     |     |     |
+	 *        _,-+-,_  |  _,-+-,_  |  _,-'-,_  |  _,-'
+	 *     ,-'   |   '-+-'   |   '-+-'       '-+-'
+	 *     |     |     |     |     |
+	 *     |-----+-----+-----+-----|           '--v--'
+	 *     |     |     |     |     |           rectWidth
+	 *     '-,_  |  _,-'-,_  |  _,-'
+	 *         '-+-'       '-+-'
+	 */
 	static constexpr double rectWidth = Width * sin_pi_div_3;
 	static constexpr double rectHeight = Width * sin_pi_div_6_plus_1;
 
 public:
 	HexBoard()
 	{
+		/* To jest tymczasowe zachowanie konstrutkora.
+		 * Tworzy 10^6 pól. */
 		for(int i = 0; i < 1000; i++)
 			for(int j = 0; j < 1000; j++)
 				Parent::operator () (i, j);
@@ -231,6 +266,7 @@ protected:
 	}
 };
 
+/* Domyślna plansza hexowa */
 typedef HexBoard<HexField, 50> Board;
 
 } // namespace Hex

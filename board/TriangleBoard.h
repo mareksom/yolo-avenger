@@ -6,6 +6,15 @@
 
 namespace Triangle {
 
+/* Pole o kształcie trójkąta równobocznego.
+ * Myśli, że długość podstawy tego trójkąta jest równa 1.
+ * Są dwa typy trójkątów:
+ *                           ____
+ *        /\                \    /
+ *       /  \                \  /
+ *      /____\                \/
+ *     normalny         do góry nogami
+ */
 class TriangleField : public Board::Field
 {
 public:
@@ -13,8 +22,10 @@ public:
 	{
 	}
 
+	/* Czy trójkąt jest do góry nogami? */
 	bool upsideDown() const { return x() % 2 != 0; }
 
+	/* Specjalizacja, żeby dobrze umieścić napis ze współrzędnymi. */
 	void draw(Cairo::RefPtr<Cairo::Context> context) const
 	{
 		Field::draw(context);
@@ -33,11 +44,20 @@ public:
 	}
 };
 
+/* Plansza trójkątów równobocznych.
+ *            ______
+ *          /\      /
+ *    ...  /  \    /
+ *        /    \  /  ...
+ *       /______\/
+ *        Width -- długość podstawy
+ */
 template<typename FieldType, int Width>
 class TriangleBoard : public Board::Board<FieldType, TriangleBoard<FieldType, Width> >
 {
 	typedef typename Board::Board<FieldType, TriangleBoard<FieldType, Width> > Parent;
 
+	/* Stałe do optymalizacji obliczeń. */
 	static constexpr double sqrt_3 = 1.7320508075688772;
 	static constexpr double sqrt_3_div_2 = sqrt_3 / 2;
 	static constexpr double sqrt_3_div_4 = sqrt_3 / 4;
@@ -45,6 +65,21 @@ class TriangleBoard : public Board::Board<FieldType, TriangleBoard<FieldType, Wi
 	static constexpr double negative_sqrt_3_div_2 = -sqrt_3_div_2;
 	static constexpr double negative_sqrt_3_div_4 = -sqrt_3_div_4;
 
+	/* Planszę trójkątów równobocznych można podzielić na prostokąty:
+	 *           ____ ____ ____ ____ ____ ____ ____ ____ ____ ___
+	 *         /|\   |   /|\   |   /|\   |   /|\   |   /|\   |   /
+	 *        / | \  |  / | \  |  / | \  |  / | \  |  / | \  |  /
+	 *       /  |  \ | /  |  \ | /  |  \ | /  |  \ | /  |  \ | /
+	 *      /___|___\|/___|___\|/___|___\|/___|___\|/___|___\|/   _
+	 *      \   |   /|\   |   /|\   |   /|\   |   /|\   |   /      ',
+	 *       \  |  / | \  |  / | \  |  / | \  |  / | \  |  /         > rectHeight
+	 *        \ | /  |  \ | /  |  \ | /  |  \ | /  |  \ | /         |
+	 *         \|/___|___\|/___|___\|/___|___\|/___|___\|/        _,'
+	 *         /|\   |   /|\   |   /
+	 *        / | \  |  / | \  |  /           |----|
+	 *       /  |  \ | /  |  \ | /           rectWidth
+	 *      /___|___\|/___|___\|/
+	 */
 	static constexpr double rectWidth = (double) Width / 2;
 	static constexpr double rectHeight = Width * sqrt_3_div_2;
 	static constexpr double rectHeight_div_2 = rectHeight / 2;
@@ -52,6 +87,7 @@ class TriangleBoard : public Board::Board<FieldType, TriangleBoard<FieldType, Wi
 public:
 	TriangleBoard()
 	{
+		/* Tymczasowe rzeczy. */
 		for(int i = 0; i < 1000; i++)
 			for(int j = 0; j < 1000; j++)
 				Parent::operator () (i, j);
@@ -215,6 +251,7 @@ private:
 	}
 };
 
+/* Domyślna plansza dla trójkątów równobocznych. */
 typedef TriangleBoard<TriangleField, 100> Board;
 
 } // namespace Triangle

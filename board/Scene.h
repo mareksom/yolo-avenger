@@ -1,10 +1,19 @@
 #pragma once
+/* Scena, która zawiera planszę.
+ * Jest to pośrednik między użytkownikiem a planszą:
+ *   1. Odbiera wejście od użytkownika (mysz, klawiaturę) i od systemu (jakieś może sygnały, odrysowania itp.).
+ *   2. Zamienia wejście na bardziej abstrakcyjne operacje.
+ *   3. Przekazuje polecenia planszy.
+ *   4. Odbiera jakąś odpowiedź od planszy.
+ *   5. Informuje jakoś o tym użytkownika (albo i nie, jak nie ma potrzeby).
+ */
 
 #include <bits/stdc++.h>
 
 template<typename Board>
 class Scene : public Gtk::DrawingArea
 {
+	/* Szerokość ramki zaznaczenia (jak zaznaczenie jest rysowane, to to jest grubość linii tego prostokąta). */
 	static constexpr double selectionBorderWidth = 3.0;
 
 public:
@@ -21,8 +30,10 @@ public:
 
 	virtual ~Scene() { }
 
+	/* Narysuj wszystko od nowa. */
 	void invalidate() { queue_draw(); }
 
+	/* Narysuj prostokąt Rect(x, y, width, height) od nowa. */
 	void invalidateArea(double x, double y, double width, double height)
 	{
 		int nX = std::floor(xToPointer(x));
@@ -32,12 +43,14 @@ public:
 		queue_draw_area(nX, nY, nWidth, nHeight);
 	}
 
+	/* Gdy trzeba coś narysować (bo zostało zinvalidowane), to tu jest napisane jak to zrobić. */
 	bool on_draw(const Cairo::RefPtr<Cairo::Context> & context) override
 	{
 		context->save();
 			context->translate(-transX, -transY);
 			context->scale(zoom, zoom);
 			board.draw(context);
+			/* Rysowanie ramki zaznaczenia. */
 			if(selectionValid)
 			{
 				context->save();
@@ -62,6 +75,7 @@ public:
 			}
 		context->restore();
 		/*
+		//Fragment, który rysuje ramkę obszaru odrysowywanego -- debug only
 		context->save();
 			double x, y, width, height;
 			context->get_clip_extents(x, y, width, height);
@@ -77,13 +91,16 @@ public:
 
 	virtual bool on_motion_notify_event(GdkEventMotion * event) override
 	{
+		/* Ruch myszki wpływa na zaznaczenie. */
 		updateSelection(xFromPointer(event->x), yFromPointer(event->y));
+		/* Ruch myszki wpływa na najechane pole. */
 		board.hover_event(xFromPointer(event->x), yFromPointer(event->y));
 		return true;
 	}
 
 	virtual bool on_scroll_event(GdkEventScroll * event) override
 	{
+		/* Jeśli Ctrl jest wciśnięty. */
 		if(event->state & GDK_CONTROL_MASK)
 		{
 			/* Zoom in/out */
@@ -113,17 +130,22 @@ public:
 				transX += delta;
 			board.hover_event(xFromPointer(event->x), yFromPointer(event->y));
 		}
+		/* Przesuwanie/przybliżanie/oddalanie wpływają na zaznaczenie. */
 		updateSelection(xFromPointer(event->x), yFromPointer(event->y));
+		/* Wszystko trzeba odrysować, bo się przesunęło/oddaliło albo przybliżyło. */
 		invalidate();
 		return true;
 	}
 
 	virtual bool on_button_press_event(GdkEventButton * event) override
 	{
+		/* Wyczyszczenie zaznaczenia przy kliknięciu. */
 		invalidateSelection();
 		selectionStarted = selectionValid = false;
+		/* Jeśli wciśnięty lewy przycisk myszy. */
 		if(event->button == 1)
 		{
+			/* Rozpocznij nowe zaznaczenie. */
 			selectionStarted = true;
 			selectionX = xFromPointer(event->x);
 			selectionY = yFromPointer(event->y);
@@ -136,10 +158,12 @@ public:
 
 	virtual bool on_button_release_event(GdkEventButton * event) override
 	{
+		/* Zakończ zaznaczenie jak się puści mysz. */
 		selectionStarted = false;
 		return false;
 	}
 
+	/* Odrysuj ekran pod zaznaczeniem. */
 	void invalidateSelection()
 	{
 		if(selectionValid)
@@ -152,10 +176,13 @@ public:
 		}
 	}
 
+	/* Popraw zaznaczenie, jeśli teraz kursor myszy jest na pozycji (x, y). */
 	void updateSelection(double x, double y)
 	{
 		if(selectionStarted)
 		{
+			/* Ta implementacja optymalizuje mocno zaznaczanie.
+			 * Gdy myszka się przesuwa, poprawiane są jedynie obszary, które się zmieniły. */
 			const double oldWidth = selectionWidth;
 			const double oldHeight = selectionHeight;
 
@@ -258,16 +285,24 @@ public:
 	}
 
 private:
+	/* Zamień współrzędne ekranu na współrzędne planszy. */
 	double xFromPointer(double x) { return (x + transX) / zoom; }
 	double yFromPointer(double y) { return (y + transY) / zoom; }
+	/* Zamień współrzędne planszy na współrzędne ekranu. */
 	double xToPointer(double x) { return x * zoom - transX; }
 	double yToPointer(double y) { return y * zoom - transY; }
 
 	Board & board;
 
+	/* Przesunięcie planszy i zoom (względem ekranu). */
 	double transX, transY, zoom;
 
+	/* Czy użytkownik jest w trakcie zaznaczania (trzyma wciśnięty przycisk myszy)? */
 	bool selectionStarted;
+	/* Czy zaznaczenie jest poprawne? Inaczej - czy zaznaczenie jest aktywne? */
 	bool selectionValid;
+	/* Aktualne zaznaczenie
+	 * (selectionX, selectionY) -- punkt, w którym użytkownik zaczął zaznaczać
+	 * selectionWidth i selectionHeight mogą być ujemne. */
 	double selectionX, selectionY, selectionWidth, selectionHeight;
 };
